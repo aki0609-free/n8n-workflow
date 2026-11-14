@@ -104,19 +104,25 @@ npm run sync:code && npm run validate:workflows && npm test
 3. 認証情報を投入する: `npm run n8n:credentials -- "<name>" ...`（必要なものだけ）
 4. インポートする: `npm run n8n:import -- workflows/<id>.json`
 5. HTTP ケースと有効化を確認する: `npm run n8n:test -- workflows/<id>.json`
+   - **Form / Webhook トリガーのワークフローは `--keep-active` を付けて、テスト後も公開したままにする**
+     （Dashy のカードからフォーム・実行ページですぐ使えるようにするため。非公開だとフォームは「Problem loading form」になる）
+   - Schedule やアプリのイベントのトリガーは、公開すると自動で動き出すため `--keep-active` を付けない。公開するかはユーザーに任せる
    - 公開（有効化）できるか = Credential やノード設定に問題が無いかも、ここで確認される
    - MCP ケースは `skipped (MCP)` と表示されるだけなので、次の手順で実行する
 6. MCP ケースを実行する（MCP が使える場合）:
    1. `get_workflow_details`（`workflowId` は JSON の `id`、`detailLevel: "execution"`）でトリガー名と入力の形を確認する
    2. ケースごとに `execute_workflow`（`executionMode: "manual"`、`triggerNodeName` = `trigger`、`inputs`）を呼ぶ
    3. 返ってきた executionId で `get_workflow_execution`（`includeData: true`、`nodeNames: [expect.node]`）を呼び、
-      実行の `status` と、そのノードの出力の 1 件目が `expect.json` と部分一致するかを判定する
+      実行の `status` と、そのノードの出力の 1 件目が `expect.json` と部分一致するかを判定する。
+      Form の完了画面（`n8n-nodes-base.form` の completion）で終わるワークフローは、MCP から実行すると
+      ブラウザの表示待ちで `status` が `waiting` になる。`expect.status` が `success` でも、`waiting` なら合格として扱う
    4. 結果を `✓ / ✗ <ケース名>` の形で報告する
    - `N8N_API_KEY` が未入力で手順 5 を実行できない場合は、HTTP ケースも同じ方法で代わりに確認する
      （`inputs: { "webhookData": { "method", "body", "query", "headers" } }`、判定は Respond to Webhook の直前のノードの出力）。
      この方法では HTTP のステータスコードと応答本文は確かめられないため、報告にその旨を書く
 7. 失敗した場合は `docker compose logs --tail=100 n8n`、レスポンス、実行データから原因を特定し、Phase 2〜3 に戻って修正する（最大 3 回）。
    - 修正したら `npm run n8n:import -- workflows/<id>.json` で取り込み直してから再テストする
+     （取り込みで非公開になったワークフローは、`N8N_API_KEY` があれば自動で公開し直される）
    - 3 回直らない場合は、原因の仮説と確認してほしい点をまとめて報告し、終了する。
    - MCP ケースが無い Schedule トリガーなどは、有効化の確認までを行い、設計書に書かれた確認方法をユーザーに案内する。
 
@@ -132,7 +138,7 @@ npm run sync:code && npm run validate:workflows && npm test
    - 仕様書: `doc/specifications/<id>.md`
    - テスト: `tests/workflows/<id>.cases.json`（最終実行: YYYY-MM-DD、N 件成功）
    ```
-3. 最終報告: 作成・変更したファイル、テストデプロイの結果、ユーザーが行うこと（Credential の値の記入、本番での有効化など）。コミットはユーザーの指示があるまで行わない。
+3. 最終報告: 作成・変更したファイル、テストデプロイの結果、公開状態（Form / Webhook は公開済みで Dashy から使えること）、ユーザーが行うこと（Credential の値の記入など）。コミットはユーザーの指示があるまで行わない。
 
 ## 禁止事項
 - `secrets/` 配下を読む・表示する・編集すること。`node scripts/secrets.js credentials` を直接実行すること

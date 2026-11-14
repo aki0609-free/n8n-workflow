@@ -73,6 +73,12 @@ flowchart TD
 3. 各ケースのリクエストを本番 Webhook URL（`http://localhost:5678/webhook/<path>`）に送信し、ステータスとレスポンスを照合する
 4. もともと無効だった場合は無効に戻す（`--keep-active` で有効のまま残す）
 
+`/build-from-design` は、Form / Webhook トリガーのワークフローを `--keep-active` で公開したままにします（Dashy からすぐ使えるように）。
+Schedule やアプリのイベントのトリガーは、公開すると自動で動き出すため、公開するかはユーザーに任せます。
+
+`npm run n8n:import` は、取り込む前に公開中だったワークフローを、取り込んだ後に公開し直します（n8n の `import:workflow` は
+取り込んだワークフローを非公開にするため。`N8N_API_KEY` が必要）。
+
 テストケースのファイル形式:
 
 ```json

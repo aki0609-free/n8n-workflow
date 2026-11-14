@@ -35,6 +35,9 @@ model: inherit
 9. Form Trigger（`n8n-nodes-base.formTrigger`）は、各項目に `fieldName`（英小文字の snake_case）を必ず付ける。
    送信内容は `$json.<fieldName>` に平らに並び、`submittedAt`・`formMode` が自動で付く（`body` の下には入らない）。
    `options.path` を固定し、フォーム URL は `http://localhost:5678/form/<path>` になる。
+   フォームは公開（有効化）していないと「Problem loading form」になる。ブラウザからの送信では項目名が `field-0`, `field-1` …
+   （並び順）になり、n8n が `fieldName` に変換する。`curl` で本番フォームを試すときは `-F 'field-0=...'` の形で送る。
+   完了画面（`n8n-nodes-base.form` の completion）で終わる場合、MCP からの実行は `waiting` で終わる（正常）。
 
 ## n8n MCP の使い方（`.mcp.json` の `n8n`）
 前提: n8n の無料版（セルフホストの Community Edition）と Claude Code のサブスクリプションの範囲で完結させる。

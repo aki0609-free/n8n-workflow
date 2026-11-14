@@ -84,7 +84,8 @@ npm run n8n:import -- workflows/<name>.json
 
 - テスト用 Webhook URL: `http://localhost:5678/webhook-test/<path>`（UI で「Test workflow」を押している間だけ有効）
 - 本番用 Webhook URL: `http://localhost:5678/webhook/<path>`（ワークフローを有効化した場合のみ）
-- Credential はインポートされません。UI で作成して、各ノードに割り当ててください。
+- Credential はインポートされません。`npm run n8n:credentials` で登録します。
+- n8n の `import:workflow` は取り込んだワークフローを非公開にしますが、`npm run n8n:import` は、公開中だったものを取り込み後に公開し直します（`N8N_API_KEY` が必要）。
 
 ## 仕様書を更新する
 

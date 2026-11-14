@@ -74,7 +74,7 @@ Claude は推測でノードのパラメータを書かずに、n8n から正し
 | ノード単位の検証 | `validate_node_config` | 確認なし |
 | 実際の値の取得 | `explore_node_resources`、`list_credentials`（値は返らない） | 確認なし |
 | ワークフロー・実行結果の参照 | `search_workflows`、`get_workflow_details`、`get_workflow_execution`、`search_workflow_executions` | 確認なし |
-| テスト実行 | `execute_workflow`（`executionMode: "manual"`） | 毎回確認 |
+| テスト実行 | `execute_workflow`（`executionMode: "manual"`） | 確認なし |
 | n8n 上のワークフローの作成・変更・公開・アーカイブ | `create_workflow_from_code`、`update_workflow`、`publish_workflow` など | 毎回確認（基本は使わない） |
 
 > 「確認なし」のツールは、どれも読み取りか検証だけで n8n 側を変更しないため、`.claude/settings.json` の `permissions.allow` に登録しています。
@@ -99,8 +99,12 @@ Claude は推測でノードのパラメータを書かずに、n8n から正し
 
 | 種類 | 対象 |
 | --- | --- |
-| allow（確認なしで実行） | テスト、フォーマット、ワークフロー検証、同期、`describe`、`secrets:check`、`git status` / `git diff`、`docker compose ps` / `logs` / `config` |
-| ask（毎回確認） | n8n へのインポート・エクスポート・Credential 投入・テストデプロイ、`secrets:init`、`docker compose up` / `down`、MCP の実行・ワークフロー変更系ツール |
+| allow（確認なしで実行） | テスト、フォーマット、ワークフロー検証、同期、`describe`、`secrets:check`、`git status` / `git diff`、`docker compose ps` / `logs` / `config`、ローカル n8n へのインポート・Credential 投入・テストデプロイ、MCP の参照・検証・テスト実行（`execute_workflow`） |
+| ask（毎回確認） | n8n からのエクスポート、`secrets:init`、`docker compose up` / `down`、MCP のワークフロー変更系ツール（作成・更新・公開・アーカイブ） |
+
+> ローカル n8n へのインポート・Credential 投入・テストデプロイを allow にしているのは、Workflow Studio や `design:build --auto` の
+> 非対話モード（`claude -p`）では確認画面を出せず、ask のままだと必ず拒否されて構築が取り込みの手前で止まるためです。
+> どれもローカルの n8n だけに影響します。構築を始める操作（Studio の「構築を開始」など）を確認とみなしています。
 | deny（禁止） | `.env` と `.env.*` の読み取り、`secrets/` の読み書き、値を出力する `secrets.js credentials` の直接実行、`docker compose down -v`、`docker volume rm` |
 
 個人だけで使う設定は `.claude/settings.local.json`（Git の管理対象外）に書いてください。

@@ -14,7 +14,7 @@
  */
 const fs = require('node:fs');
 const path = require('node:path');
-const { parseEnv } = require('./lib/secrets');
+const { loadApiKey, defaultBaseUrl, createClient } = require('./lib/n8n-api');
 const { runCase, isMcpCase } = require('./lib/case-runner');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -39,40 +39,14 @@ const cases = allCases.filter((c) => !isMcpCase(c));
 const mcpCases = allCases.filter(isMcpCase);
 if (!workflow.id) fail(`${workflowFile} has no "id"`);
 
-const secretsPath = path.join(ROOT, 'secrets', 'secrets.env');
-const secrets = fs.existsSync(secretsPath) ? parseEnv(fs.readFileSync(secretsPath, 'utf8')) : {};
-const apiKey = process.env.N8N_API_KEY || secrets.N8N_API_KEY;
+const apiKey = loadApiKey(ROOT);
 if (!apiKey) {
   fail(
     'N8N_API_KEY が未設定です。n8n UI > Settings > n8n API で発行し、secrets/secrets.env に記入してください。',
   );
 }
-const baseUrl = process.env.N8N_BASE_URL || `http://localhost:${process.env.N8N_PORT || 5678}/`;
-
-async function api(method, apiPath) {
-  const res = await fetch(new URL(`api/v1/${apiPath}`, baseUrl), {
-    method,
-    headers: { 'X-N8N-API-KEY': apiKey, Accept: 'application/json' },
-  });
-  const text = await res.text();
-  if (!res.ok) {
-    const err = new Error(`${method} /api/v1/${apiPath} → ${res.status} ${text.slice(0, 300)}`);
-    err.status = res.status;
-    throw err;
-  }
-  return text ? JSON.parse(text) : {};
-}
-
-// n8n 2.x 以降は publish / unpublish。古いバージョン（エンドポイントが無い = 404）は activate / deactivate
-async function setPublished(id, publish) {
-  const [current, legacy] = publish ? ['publish', 'activate'] : ['unpublish', 'deactivate'];
-  try {
-    await api('POST', `workflows/${id}/${current}`);
-  } catch (err) {
-    if (err.status !== 404 && err.status !== 405) throw err;
-    await api('POST', `workflows/${id}/${legacy}`);
-  }
-}
+const baseUrl = defaultBaseUrl();
+const { api, setPublished } = createClient({ apiKey, baseUrl });
 
 (async () => {
   console.log(`▶ ${workflow.name} (id=${workflow.id}) @ ${baseUrl}`);

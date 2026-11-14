@@ -25,6 +25,11 @@ if [ "$#" -eq 0 ]; then
   set -- workflows/*.json
 fi
 
+# import:workflow は取り込んだワークフローを非公開にするため、公開中だったものを記録して後で公開し直す
+STATE_FILE="$(mktemp)"
+trap 'rm -f "$STATE_FILE"' EXIT
+node scripts/n8n-publish-state.js save "$STATE_FILE" "$@" || true
+
 status=0
 for file in "$@"; do
   case "$file" in
@@ -46,6 +51,8 @@ for file in "$@"; do
     status=1
   fi
 done
+
+node scripts/n8n-publish-state.js restore "$STATE_FILE" || status=1
 
 # Dashy のカタログを更新（失敗してもインポート結果には影響させない）
 node scripts/dashy-sync.js || echo "warning: dashy:sync に失敗しました" >&2

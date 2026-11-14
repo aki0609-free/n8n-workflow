@@ -41,6 +41,7 @@ project001/
 │   ├── n8n-import.sh               ローカル n8n へインポート
 │   ├── n8n-export.sh               ローカル n8n からエクスポート
 │   ├── n8n-test-run.js             テストデプロイ（有効化 → Webhook でケース実行 → 無効化）
+│   ├── n8n-publish-state.js        n8n:import の前後で公開状態を保つ（取り込み後に公開し直す）
 │   └── lib/                        上記スクリプトのロジック（Jest でテスト。claude-cli.js は claude -p の共通処理）
 ├── studio/                         Workflow Studio（アプリ作成サイト。doc/studio.md）
 │   ├── server.js                   Web サーバーと API（Node.js 標準モジュールのみ）
