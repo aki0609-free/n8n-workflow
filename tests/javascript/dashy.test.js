@@ -102,7 +102,7 @@ describe('buildDashyConfig', () => {
 
     expect(warnings).toEqual([]);
     expect(config.pageInfo.navLinks[0].path).toBe('http://localhost:5678/');
-    expect(config.sections.map((s) => s.name)).toEqual(['Tools', '[SLS] 営業']);
+    expect(config.sections.map((s) => s.name)).toEqual(['Tools', '[SLS] 営業', 'リンク・資料']);
     expect(config.sections[0].items[0].url).toBe('http://localhost:3100');
 
     const item = config.sections[1].items[0];
@@ -112,7 +112,16 @@ describe('buildDashyConfig', () => {
       tags: ['SLS', 'POST'],
       description: '[SLS] 注文通知（金額で振り分け） | 注文通知の設計 | POST /webhook/order-notify',
     });
-    expect(item.subItems).toEqual([
+    // カード本体は普通のリンク（subItems を付けない）。リンクは折りたたんだ「リンク」セクションへ
+    expect(item.subItems).toBeUndefined();
+    const linkSection = config.sections[2];
+    expect(linkSection.displayData).toEqual({ collapsed: true });
+    expect(linkSection.items[0].subItems).toEqual([
+      {
+        title: 'n8n で編集',
+        url: 'http://localhost:5678/workflow/Wf000000000000001',
+        icon: 'fas fa-pen',
+      },
       {
         title: 'POST http://localhost:5678/webhook/order-notify をコピー',
         url: 'http://localhost:5678/webhook/order-notify',
@@ -132,7 +141,7 @@ describe('buildDashyConfig', () => {
     ]);
   });
 
-  test('form workflows open the form from the card and keep the editor as a sub item', () => {
+  test('form workflows open the form from the card; editor link goes to the links section', () => {
     const formWorkflow = {
       id: 'FormWf0000000001',
       name: '備品貸出申請フォーム',
@@ -154,13 +163,14 @@ describe('buildDashyConfig', () => {
       workflows: [{ name: 'f', workflow: formWorkflow, hasSpec: false, designPath: null }],
     });
     const item = config.sections[0].items[0];
+    expect(item.subItems).toBeUndefined();
     expect(item).toMatchObject({
       url: 'http://localhost:5678/form/equipment-loan',
       icon: 'fas fa-clipboard-list',
       tags: ['OPS', 'FORM'],
     });
     expect(item.description).toContain('FORM /form/equipment-loan');
-    expect(item.subItems[0]).toEqual({
+    expect(config.sections[1].items[0].subItems[0]).toEqual({
       title: 'n8n で編集',
       url: 'http://localhost:5678/workflow/FormWf0000000001',
       icon: 'fas fa-pen',
@@ -182,8 +192,12 @@ describe('buildDashyConfig', () => {
       ],
     });
     expect(warnings).toHaveLength(2);
-    expect(config.sections.map((s) => s.name)).toEqual(['未分類']);
-    expect(config.sections[0].items[0].subItems).toHaveLength(1);
+    expect(config.sections.map((s) => s.name)).toEqual(['未分類', 'リンク・資料']);
+    expect(config.sections[0].items[0].subItems).toBeUndefined();
+    expect(config.sections[1].items[0].subItems.map((i) => i.title)).toEqual([
+      'n8n で編集',
+      'POST http://localhost:5678/webhook/order-notify をコピー',
+    ]);
   });
 });
 

@@ -104,26 +104,6 @@ function buildItem(entry, code, links) {
     ? `${links.n8nBaseUrl.replace(/\/+$/, '')}/workflow/${workflow.id}`
     : links.n8nBaseUrl;
 
-  const subItems = [
-    // フォームのあるワークフローは、カード本体でフォームを開く。編集画面はサブ項目にする
-    ...(forms.length > 0 ? [{ title: 'n8n で編集', url: editorUrl, icon: 'fas fa-pen' }] : []),
-    ...forms
-      .slice(1)
-      .map((f) => ({ title: `フォーム ${f.path}`, url: f.url, icon: 'fas fa-clipboard-list' })),
-    ...endpoints.map((e) => ({
-      title: `${e.method} ${e.url} をコピー`,
-      url: e.url,
-      icon: 'fas fa-copy',
-      target: 'clipboard',
-    })),
-    ...(hasSpec
-      ? [{ title: '仕様書', url: `${repo}/doc/specifications/${name}.md`, icon: 'fas fa-file-alt' }]
-      : []),
-    ...(designPath
-      ? [{ title: '設計書', url: `${repo}/${designPath}`, icon: 'fas fa-drafting-compass' }]
-      : []),
-  ];
-
   const description = [
     `[${code}] ${workflow.name}`,
     summary && summary !== workflow.name ? summary : null,
@@ -133,6 +113,8 @@ function buildItem(entry, code, links) {
     .filter(Boolean)
     .join(' | ');
 
+  // カード本体は普通のリンクにする（subItems を付けると Dashy はアイコンの並びとして描き、
+  // カード自体がリンクでなくなるため）。フォームがあればフォームを、無ければ n8n の編集画面を開く
   const item = {
     title: shortTitle(workflow.name),
     description,
@@ -145,8 +127,39 @@ function buildItem(entry, code, links) {
           : 'fas fa-cog',
     tags: [code, ...endpoints.map((e) => e.method), ...(forms.length > 0 ? ['FORM'] : [])],
   };
-  if (subItems.length > 0) item.subItems = subItems;
-  return item;
+
+  // 付随するリンク（編集画面・URL のコピー・仕様書・設計書）は「リンク」セクションにまとめる
+  const linkGroup = {
+    title: shortTitle(workflow.name),
+    description: `[${code}] ${workflow.name} のリンク`,
+    subItems: [
+      { title: 'n8n で編集', url: editorUrl, icon: 'fas fa-pen' },
+      ...forms.map((f) => ({
+        title: `フォーム /form/${f.path}`,
+        url: f.url,
+        icon: 'fas fa-clipboard-list',
+      })),
+      ...endpoints.map((e) => ({
+        title: `${e.method} ${e.url} をコピー`,
+        url: e.url,
+        icon: 'fas fa-copy',
+        target: 'clipboard',
+      })),
+      ...(hasSpec
+        ? [
+            {
+              title: '仕様書',
+              url: `${repo}/doc/specifications/${name}.md`,
+              icon: 'fas fa-file-alt',
+            },
+          ]
+        : []),
+      ...(designPath
+        ? [{ title: '設計書', url: `${repo}/${designPath}`, icon: 'fas fa-drafting-compass' }]
+        : []),
+    ],
+  };
+  return { item, linkGroup };
 }
 
 /**
@@ -159,6 +172,7 @@ function buildDashyConfig({ dashboard, categories, workflows }) {
   const warnings = [];
   const byCode = new Map(codes.map((c) => [c, []]));
   const uncategorized = [];
+  const linkGroups = [];
 
   for (const entry of [...workflows].sort((a, b) =>
     a.workflow.name.localeCompare(b.workflow.name),
@@ -168,10 +182,14 @@ function buildDashyConfig({ dashboard, categories, workflows }) {
       warnings.push(
         `${entry.name}: 分類コードのタグが ${found.length} 個です（ちょうど 1 個にしてください）`,
       );
-      uncategorized.push(buildItem(entry, found[0] || '未分類', links));
+      const built = buildItem(entry, found[0] || '未分類', links);
+      uncategorized.push(built.item);
+      linkGroups.push(built.linkGroup);
       continue;
     }
-    byCode.get(found[0]).push(buildItem(entry, found[0], links));
+    const built = buildItem(entry, found[0], links);
+    byCode.get(found[0]).push(built.item);
+    linkGroups.push(built.linkGroup);
   }
 
   const sections = [];
@@ -187,6 +205,14 @@ function buildDashyConfig({ dashboard, categories, workflows }) {
   }
   if (uncategorized.length > 0) {
     sections.push({ name: '未分類', icon: 'fas fa-question-circle', items: uncategorized });
+  }
+  if (linkGroups.length > 0) {
+    sections.push({
+      name: 'リンク・資料',
+      icon: 'fas fa-link',
+      displayData: { collapsed: true },
+      items: linkGroups,
+    });
   }
 
   return {
