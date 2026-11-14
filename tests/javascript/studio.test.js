@@ -212,3 +212,91 @@ describe('JobManager', () => {
     );
   });
 });
+
+describe('workflow-runner', () => {
+  const runner = require('../../studio/lib/workflow-runner');
+  let root;
+  beforeEach(() => {
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-run-'));
+    fs.mkdirSync(path.join(root, 'workflows'));
+    fs.mkdirSync(path.join(root, 'tests', 'workflows'), { recursive: true });
+    const wf = (id, nodes) => ({ id, name: id, nodes, connections: {} });
+    fs.writeFileSync(
+      path.join(root, 'workflows', 'hook.json'),
+      JSON.stringify(
+        wf('Hook0001', [
+          {
+            name: 'Webhook',
+            type: 'n8n-nodes-base.webhook',
+            parameters: { httpMethod: 'POST', path: '/hook' },
+          },
+        ]),
+      ),
+    );
+    fs.writeFileSync(
+      path.join(root, 'tests', 'workflows', 'hook.cases.json'),
+      JSON.stringify({ cases: [{ name: '例', request: { path: 'hook', body: { a: 1 } } }] }),
+    );
+    fs.writeFileSync(
+      path.join(root, 'workflows', 'cron.json'),
+      JSON.stringify(
+        wf('Cron0001', [
+          { name: 'Every Day', type: 'n8n-nodes-base.scheduleTrigger', parameters: {} },
+        ]),
+      ),
+    );
+  });
+  afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
+
+  test('describes webhooks with example bodies from test cases', () => {
+    expect(runner.findWorkflow(root, 'Hook0001')).toMatchObject({
+      file: 'workflows/hook.json',
+      webhooks: [{ method: 'POST', path: 'hook', exampleBody: { a: 1 }, exampleName: '例' }],
+      forms: [],
+      otherTriggers: [],
+    });
+    expect(runner.findWorkflow(root, 'Cron0001').otherTriggers).toEqual([
+      { node: 'Every Day', type: 'n8n-nodes-base.scheduleTrigger' },
+    ]);
+    expect(runner.findWorkflow(root, 'nope')).toBeNull();
+  });
+
+  test('posts only to the workflow webhook path and reports unpublished workflows', async () => {
+    const info = runner.findWorkflow(root, 'Hook0001');
+    const calls = [];
+    const fetchFn = async (url, init) => {
+      calls.push({ url, init });
+      return {
+        status: 404,
+        ok: false,
+        headers: { get: () => 'application/json' },
+        text: async () => '{"message":"The requested webhook \\"POST hook\\" is not registered."}',
+      };
+    };
+    const result = await runner.runWebhook(info, 0, {
+      body: { a: 2 },
+      n8nUrl: 'http://n8n:5678/',
+      fetchFn,
+    });
+    expect(calls[0].url).toBe('http://n8n:5678/webhook/hook');
+    expect(calls[0].init.method).toBe('POST');
+    expect(calls[0].init.body).toBe('{"a":2}');
+    expect(result.status).toBe(404);
+    expect(result.hint).toContain('公開');
+    await expect(runner.runWebhook(info, 5, { n8nUrl: 'http://n8n', fetchFn })).rejects.toThrow(
+      'webhook not found',
+    );
+  });
+
+  test('explains connection failures', async () => {
+    const info = runner.findWorkflow(root, 'Hook0001');
+    const result = await runner.runWebhook(info, 0, {
+      n8nUrl: 'http://n8n',
+      fetchFn: async () => {
+        throw new Error('ECONNREFUSED');
+      },
+    });
+    expect(result).toMatchObject({ status: 0, ok: false });
+    expect(result.hint).toContain('接続できませんでした');
+  });
+});

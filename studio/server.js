@@ -17,6 +17,7 @@ const http = require('node:http');
 const { JobManager } = require('./lib/jobs');
 const { checkRequest } = require('./lib/security');
 const store = require('./lib/design-store');
+const runner = require('./lib/workflow-runner');
 const { buildArgs, interviewArgs } = require('../scripts/lib/claude-cli');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -24,11 +25,14 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const PORT = Number(process.env.STUDIO_PORT || 3100);
 const HOST = process.env.STUDIO_HOST || '127.0.0.1';
 const MAX_BODY = 1024 * 1024;
+const N8N_URL = process.env.N8N_BASE_URL || `http://localhost:${process.env.N8N_PORT || 5678}`;
 
 const STATIC_FILES = {
   '/': ['index.html', 'text/html; charset=utf-8'],
   '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
   '/style.css': ['style.css', 'text/css; charset=utf-8'],
+  '/run': ['run.html', 'text/html; charset=utf-8'],
+  '/run.js': ['run.js', 'text/javascript; charset=utf-8'],
 };
 
 const jobs = new JobManager({ root: ROOT, command: process.env.STUDIO_CLAUDE_COMMAND || 'claude' });
@@ -165,6 +169,28 @@ async function route(req, res) {
       onEvent: detectDraft,
     });
     return sendJson(res, 202, jobs.summary(job));
+  }
+
+  // 実行ページ（Dashy のカードから開く）
+  const wfMatch = p.match(/^\/api\/workflows\/([A-Za-z0-9]{1,64})(\/run)?$/);
+  if (wfMatch) {
+    const info = runner.findWorkflow(ROOT, wfMatch[1]);
+    if (!info) return sendJson(res, 404, { error: `ワークフローが見つかりません: ${wfMatch[1]}` });
+    if (m === 'GET' && !wfMatch[2]) {
+      return sendJson(res, 200, {
+        ...info,
+        n8nUrl: N8N_URL,
+        editorUrl: `${N8N_URL}/workflow/${info.id}`,
+      });
+    }
+    if (m === 'POST' && wfMatch[2] === '/run') {
+      const { webhook = 0, body } = await readJson(req);
+      return sendJson(
+        res,
+        200,
+        await runner.runWebhook(info, Number(webhook), { body, n8nUrl: N8N_URL }),
+      );
+    }
   }
 
   const jobMatch = p.match(/^\/api\/jobs\/([0-9a-f-]{36})(\/events|\/cancel)?$/);

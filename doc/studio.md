@@ -38,6 +38,21 @@ flowchart LR
 - 人が入力して使うアプリには、トリガーとして n8n のフォームを勧めます。完成したワークフローは Dashy のカードからフォームを開いて使えます
 - 会話の内容はブラウザ（localStorage）に残ります。「新しい会話」で消えます
 
+## ワークフローを実行する（Dashy のカードから）
+
+Dashy のワークフローのカードをクリックすると、ワークフローが実行できる画面が開きます。
+
+| トリガー | カードをクリックすると |
+| --- | --- |
+| フォーム（Form Trigger） | n8n のフォーム（`/form/<path>`）が開く。送信するとワークフローが動く |
+| Webhook | Studio の実行ページ（`/run?id=<workflowId>`）が開く。送信する JSON を確認・編集して「実行」を押すと、本番 URL（`/webhook/<path>`）に送り、結果（ステータスと応答）を表示する |
+| Schedule / Manual など | 実行ページに「ここからは実行できない」理由と代わりの方法を表示する（n8n に外部から実行する API が無いため） |
+
+- 実行ページの JSON には、`tests/workflows/<name>.cases.json` の最初のケースの内容が例として入っています
+- 本番 URL を使うため、n8n でワークフローを **公開（Publish / 有効化）** しておく必要があります。公開していないと、実行ページに理由と対処が表示されます
+- 実行すると、通知などの処理も実際に行われます
+- 送信先は `workflows/*.json` に書かれた Webhook のパスだけです（任意の URL には送りません）
+
 ## 費用（サブスクリプションの範囲で動かす）
 
 Studio は Claude Code の CLI（`claude -p`）を呼び出すだけで、Agent SDK や API キーは使いません。
@@ -89,7 +104,8 @@ Studio は Claude にリポジトリを書き換えさせるため、このマ�
 | `studio/lib/jobs.js` | `claude -p` の実行と出力の中継（同時実行は 1 つ） |
 | `studio/lib/design-store.js` | 設計書の一覧・読み込み・保存、下書きの取り出し |
 | `studio/lib/security.js` | アクセス制限 |
-| `studio/public/` | 画面（HTML / CSS / JS） |
+| `studio/lib/workflow-runner.js` | 実行ページ用。ワークフローのトリガー情報の読み取りと Webhook の送信 |
+| `studio/public/` | 画面（HTML / CSS / JS）。`run.html` / `run.js` は実行ページ |
 | `scripts/lib/claude-cli.js` | `claude -p` の引数・環境変数・出力の解析（`design:build` と共通） |
 | `scripts/studio-ctl.js` | バックグラウンド起動・停止（PID とログは `.studio/`） |
 | `.claude/agents/design-interviewer.md` | 対話から作成の聞き取り役 |

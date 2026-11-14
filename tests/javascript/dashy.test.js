@@ -108,7 +108,9 @@ describe('buildDashyConfig', () => {
     const item = config.sections[1].items[0];
     expect(item).toMatchObject({
       title: '注文通知',
-      url: 'http://localhost:5678/workflow/Wf000000000000001',
+      // フォームが無いワークフローは、Studio の実行ページを開く
+      url: 'http://localhost:3100/run?id=Wf000000000000001',
+      icon: 'fas fa-play-circle',
       tags: ['SLS', 'POST'],
       description: '[SLS] 注文通知（金額で振り分け） | 注文通知の設計 | POST /webhook/order-notify',
     });
@@ -175,6 +177,19 @@ describe('buildDashyConfig', () => {
       url: 'http://localhost:5678/workflow/FormWf0000000001',
       icon: 'fas fa-pen',
     });
+  });
+
+  test('falls back to the n8n editor when studioUrl is not configured', () => {
+    const { studioUrl, ...noStudio } = links;
+    const { config } = buildDashyConfig({
+      dashboard: { links: noStudio },
+      categories,
+      workflows: [{ name: 'o', workflow: webhookWorkflow(), hasSpec: false, designPath: null }],
+    });
+    expect(studioUrl).toBeDefined();
+    expect(config.sections[0].items[0].url).toBe(
+      'http://localhost:5678/workflow/Wf000000000000001',
+    );
   });
 
   test('puts workflows without exactly one category into 未分類 with a warning', () => {

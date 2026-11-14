@@ -114,17 +114,18 @@ function buildItem(entry, code, links) {
     .join(' | ');
 
   // カード本体は普通のリンクにする（subItems を付けると Dashy はアイコンの並びとして描き、
-  // カード自体がリンクでなくなるため）。フォームがあればフォームを、無ければ n8n の編集画面を開く
+  // カード自体がリンクでなくなるため）。クリックでワークフローを実行する:
+  // - フォームがあればフォームを開く
+  // - 無ければ Workflow Studio の実行ページ（Webhook を送る。POST はリンクだけでは送れないため）
+  const runUrl =
+    links.studioUrl && workflow.id
+      ? `${links.studioUrl.replace(/\/+$/, '')}/run?id=${encodeURIComponent(workflow.id)}`
+      : editorUrl;
   const item = {
     title: shortTitle(workflow.name),
     description,
-    url: forms.length > 0 ? forms[0].url : editorUrl,
-    icon:
-      forms.length > 0
-        ? 'fas fa-clipboard-list'
-        : endpoints.length > 0
-          ? 'fas fa-plug'
-          : 'fas fa-cog',
+    url: forms.length > 0 ? forms[0].url : runUrl,
+    icon: forms.length > 0 ? 'fas fa-clipboard-list' : 'fas fa-play-circle',
     tags: [code, ...endpoints.map((e) => e.method), ...(forms.length > 0 ? ['FORM'] : [])],
   };
 
