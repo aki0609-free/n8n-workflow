@@ -114,18 +114,24 @@ function buildItem(entry, code, links) {
     .join(' | ');
 
   // カード本体は普通のリンクにする（subItems を付けると Dashy はアイコンの並びとして描き、
-  // カード自体がリンクでなくなるため）。クリックでワークフローを実行する:
-  // - フォームがあればフォームを開く
-  // - 無ければ Workflow Studio の実行ページ（Webhook を送る。POST はリンクだけでは送れないため）
-  const runUrl =
-    links.studioUrl && workflow.id
-      ? `${links.studioUrl.replace(/\/+$/, '')}/run?id=${encodeURIComponent(workflow.id)}`
-      : editorUrl;
+  // カード自体がリンクでなくなるため）。クリック先はワークフローの動き方で決める:
+  // - フォームがある → フォームを開く（人が入力して実行する）
+  // - Webhook がある → Workflow Studio の実行ページ（POST はリンクだけでは送れないため）
+  // - それ以外（定期実行・アプリのイベント・手動）→ n8n の編集画面（人が直接実行しないため）
+  let url = editorUrl;
+  let icon = 'fas fa-cog';
+  if (forms.length > 0) {
+    url = forms[0].url;
+    icon = 'fas fa-clipboard-list';
+  } else if (endpoints.length > 0 && links.studioUrl && workflow.id) {
+    url = `${links.studioUrl.replace(/\/+$/, '')}/run?id=${encodeURIComponent(workflow.id)}`;
+    icon = 'fas fa-play-circle';
+  }
   const item = {
     title: shortTitle(workflow.name),
     description,
-    url: forms.length > 0 ? forms[0].url : runUrl,
-    icon: forms.length > 0 ? 'fas fa-clipboard-list' : 'fas fa-play-circle',
+    url,
+    icon,
     tags: [code, ...endpoints.map((e) => e.method), ...(forms.length > 0 ? ['FORM'] : [])],
   };
 

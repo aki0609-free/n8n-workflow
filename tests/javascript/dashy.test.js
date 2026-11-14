@@ -179,6 +179,24 @@ describe('buildDashyConfig', () => {
     });
   });
 
+  test('workflows run by schedules or app events open the n8n editor', () => {
+    const scheduled = {
+      id: 'Sched00000000001',
+      name: '日次レポート',
+      tags: [{ name: 'OPS' }],
+      nodes: [{ name: 'Every Day', type: 'n8n-nodes-base.scheduleTrigger', parameters: {} }],
+    };
+    const { config } = buildDashyConfig({
+      dashboard: { links },
+      categories,
+      workflows: [{ name: 's', workflow: scheduled, hasSpec: false, designPath: null }],
+    });
+    expect(config.sections[0].items[0]).toMatchObject({
+      url: 'http://localhost:5678/workflow/Sched00000000001',
+      icon: 'fas fa-cog',
+    });
+  });
+
   test('falls back to the n8n editor when studioUrl is not configured', () => {
     const { studioUrl, ...noStudio } = links;
     const { config } = buildDashyConfig({
