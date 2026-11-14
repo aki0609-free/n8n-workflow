@@ -65,7 +65,7 @@ flowchart TD
 `npm run n8n:test -- workflows/<id>.json`（`scripts/n8n-test-run.js`）が次を行います。
 
 1. `tests/workflows/<id>.cases.json` を読み込む
-2. n8n Public API でワークフローがインポート済みか確認し、無効なら有効化する
+2. n8n Public API でワークフローがインポート済みか確認し、未公開なら公開（publish）する。n8n 2.x 以降の `publish` が無い古いバージョンでは `activate` を使う
 3. 各ケースのリクエストを本番 Webhook URL（`http://localhost:5678/webhook/<path>`）に送信し、ステータスとレスポンスを照合する
 4. もともと無効だった場合は無効に戻す（`--keep-active` で有効のまま残す）
 

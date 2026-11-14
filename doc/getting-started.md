@@ -39,7 +39,7 @@ npm run secrets:check     # 入力状況を確認
 
 | 変数 | 既定値 | 説明 |
 | --- | --- | --- |
-| `N8N_VERSION` | `latest` | n8n イメージのタグ。チームで揃えるため具体的なバージョンへの固定を推奨 |
+| `N8N_VERSION` | `2.47.7` | n8n イメージのタグ。破壊的変更を避けるため固定（上げる前に n8n の breaking changes を確認） |
 | `N8N_PORT` | `5678` | ホスト側のポート |
 | `DASHY_VERSION` / `DASHY_PORT` | `4.9.0` / `4000` | Dashy のイメージタグとポート |
 | `GENERIC_TIMEZONE` | `Asia/Tokyo` | n8n のタイムゾーン（Schedule Trigger などに影響） |

@@ -52,9 +52,23 @@ async function api(method, apiPath) {
     headers: { 'X-N8N-API-KEY': apiKey, Accept: 'application/json' },
   });
   const text = await res.text();
-  if (!res.ok)
-    throw new Error(`${method} /api/v1/${apiPath} → ${res.status} ${text.slice(0, 300)}`);
+  if (!res.ok) {
+    const err = new Error(`${method} /api/v1/${apiPath} → ${res.status} ${text.slice(0, 300)}`);
+    err.status = res.status;
+    throw err;
+  }
   return text ? JSON.parse(text) : {};
+}
+
+// n8n 2.x 以降は publish / unpublish。古いバージョン（エンドポイントが無い = 404）は activate / deactivate
+async function setPublished(id, publish) {
+  const [current, legacy] = publish ? ['publish', 'activate'] : ['unpublish', 'deactivate'];
+  try {
+    await api('POST', `workflows/${id}/${current}`);
+  } catch (err) {
+    if (err.status !== 404 && err.status !== 405) throw err;
+    await api('POST', `workflows/${id}/${legacy}`);
+  }
 }
 
 (async () => {
@@ -72,11 +86,11 @@ async function api(method, apiPath) {
   const wasActive = remote.active === true;
   if (!wasActive) {
     try {
-      await api('POST', `workflows/${workflow.id}/activate`);
-      console.log('  activated');
+      await setPublished(workflow.id, true);
+      console.log('  published');
     } catch (err) {
       fail(
-        `有効化に失敗しました（Credential 未設定やノード設定エラーの可能性）:\n  ${err.message}`,
+        `公開（有効化）に失敗しました（Credential 未設定やノード設定エラーの可能性）:\n  ${err.message}`,
       );
     }
   }
@@ -96,10 +110,9 @@ async function api(method, apiPath) {
     }
   } finally {
     if (!wasActive && !keepActive) {
-      await api('POST', `workflows/${workflow.id}/deactivate`).catch((err) =>
-        console.error(`  warning: deactivate failed: ${err.message}`),
-      );
-      console.log('  deactivated (restored)');
+      await setPublished(workflow.id, false)
+        .then(() => console.log('  unpublished (restored)'))
+        .catch((err) => console.error(`  warning: unpublish failed: ${err.message}`));
     }
   }
 
