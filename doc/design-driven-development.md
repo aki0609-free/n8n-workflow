@@ -26,7 +26,7 @@ flowchart TD
 | `npm run design:list` | 設計書の一覧と status |
 
 `design:build` は実行前に front matter を確認し、`status: draft` や `id` の形式不正なら Claude を起動せずに止まります。
-`--auto` で Claude に許可するコマンドは `scripts/design.js` の `AUTO_ALLOWED_TOOLS` で管理しています（`.claude/settings.json` の deny は `--auto` でも有効です）。
+`--auto` で Claude に許可するコマンドは `scripts/lib/claude-cli.js` の `AUTO_ALLOWED_TOOLS` で管理しています（`.claude/settings.json` の deny は `--auto` でも有効です）。
 
 ## 事前準備（初回のみ）
 

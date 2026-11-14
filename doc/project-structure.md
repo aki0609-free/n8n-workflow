@@ -29,7 +29,8 @@ project001/
 │   ├── python/                     pytest テスト
 │   └── workflows/                  テストデプロイ用のケース（<name>.cases.json）
 ├── scripts/
-│   ├── up.js                       一括起動（起動待ち・URL 表示。--import で取り込みも）
+│   ├── up.js                       一括起動（n8n・DB・Dashy・Studio。起動待ち・URL 表示。--import で取り込みも）
+│   ├── studio-ctl.js               Workflow Studio のバックグラウンド起動・停止
 │   ├── validate-workflows.js       ワークフロー JSON の構文・構造・Credential 参照・秘密情報の直書き・availableInMCP のチェック
 │   ├── sync-code-nodes.js          Code ノードへのソース埋め込み / 同期チェック
 │   ├── describe-workflow.js        ワークフローの構造情報を出力（仕様書生成用）
@@ -40,7 +41,11 @@ project001/
 │   ├── n8n-import.sh               ローカル n8n へインポート
 │   ├── n8n-export.sh               ローカル n8n からエクスポート
 │   ├── n8n-test-run.js             テストデプロイ（有効化 → Webhook でケース実行 → 無効化）
-│   └── lib/                        上記スクリプトのロジック（Jest でテスト）
+│   └── lib/                        上記スクリプトのロジック（Jest でテスト。claude-cli.js は claude -p の共通処理）
+├── studio/                         Workflow Studio（アプリ作成サイト。doc/studio.md）
+│   ├── server.js                   Web サーバーと API（Node.js 標準モジュールのみ）
+│   ├── lib/                        ジョブ管理・設計書の保存・アクセス制限（Jest でテスト）
+│   └── public/                     画面（HTML / CSS / JS）
 ├── doc/                            ドキュメント（このフォルダ）
 │   └── specifications/             ワークフローごとの仕様書
 ├── .github/workflows/ci.yml        GitHub Actions
@@ -98,7 +103,8 @@ project001/
 | `validate-workflows.js` | `npm run validate:workflows` | JSON 構文、必須フィールド、ノード名と ID の重複、存在しないノードへの接続を検出 |
 | `sync-code-nodes.js` | `npm run sync:code` / `sync:code:check` | `// @source` 付き Code ノードにソースを埋め込む / 同期漏れを検出 |
 | `describe-workflow.js` | `npm run describe -- <file>` | ノード一覧・接続・Mermaid 図・Credential 参照を出力 |
-| `up.js` | `npm run up [-- --import]` | n8n・PostgreSQL・Dashy を一括起動し、起動待ちのあと URL とワークフロー一覧を表示 |
+| `up.js` | `npm run up [-- --import]` | n8n・PostgreSQL・Dashy・Workflow Studio を一括起動し、起動待ちのあと URL とワークフロー一覧を表示 |
+| `studio-ctl.js` | `npm run studio:start` / `studio:stop`（`npm run down` でも停止） | Workflow Studio をバックグラウンドで起動・停止（PID とログは `.studio/`） |
 | `n8n-import.sh` | `npm run n8n:import -- [files]` | 検証してから `n8n import:workflow` を実行 |
 | `n8n-export.sh` | `npm run n8n:export -- [id]` | `n8n export:workflow` で `workflows/` に書き出す |
 
@@ -114,4 +120,4 @@ Claude Code が使う MCP サーバーの登録です。ローカル n8n の MCP
 認証は OAuth で、トークンは Claude Code 側が保持するため、このファイルや `secrets/` に値は書きません（[claude-code.md](claude-code.md#n8n-mcp-サーバーmcpjson)）。
 
 ## Git の管理対象外（`.gitignore`）
-`.env`、`secrets/`、`node_modules/`、`.venv/`、`coverage/`、Python のキャッシュ、`.DS_Store`、`.claude/settings.local.json`、`CLAUDE.local.md`。
+`.env`、`secrets/`、`.studio/`、`node_modules/`、`.venv/`、`coverage/`、Python のキャッシュ、`.DS_Store`、`.claude/settings.local.json`、`CLAUDE.local.md`。

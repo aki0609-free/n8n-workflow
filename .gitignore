@@ -28,3 +28,6 @@ __pycache__/
 # OS / Editor
 .DS_Store
 .idea/
+
+# Workflow Studio（PID とログ）
+.studio/

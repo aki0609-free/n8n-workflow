@@ -74,6 +74,19 @@ function webhookEndpoints(workflow, n8nBaseUrl) {
     });
 }
 
+/** Form Trigger のフォーム URL（/form/<path>）。path は options.path（v2.2 以降）か parameters.path */
+function formEndpoints(workflow, n8nBaseUrl) {
+  const base = n8nBaseUrl.replace(/\/+$/, '');
+  return (workflow.nodes || [])
+    .filter((n) => n.type === 'n8n-nodes-base.formTrigger' && n.parameters)
+    .map((n) => (n.parameters.options && n.parameters.options.path) || n.parameters.path)
+    .filter(Boolean)
+    .map((p) => {
+      const path = String(p).replace(/^\/+/, '');
+      return { path, url: `${base}/form/${path}` };
+    });
+}
+
 /**
  * @param {object} entry
  * @param {string} entry.name ファイル名（拡張子なし）
@@ -86,8 +99,17 @@ function buildItem(entry, code, links) {
   const { name, workflow, hasSpec, designPath, summary } = entry;
   const repo = `${links.repoUrl}/blob/${links.repoBranch}`;
   const endpoints = webhookEndpoints(workflow, links.n8nBaseUrl);
+  const forms = formEndpoints(workflow, links.n8nBaseUrl);
+  const editorUrl = workflow.id
+    ? `${links.n8nBaseUrl.replace(/\/+$/, '')}/workflow/${workflow.id}`
+    : links.n8nBaseUrl;
 
   const subItems = [
+    // フォームのあるワークフローは、カード本体でフォームを開く。編集画面はサブ項目にする
+    ...(forms.length > 0 ? [{ title: 'n8n で編集', url: editorUrl, icon: 'fas fa-pen' }] : []),
+    ...forms
+      .slice(1)
+      .map((f) => ({ title: `フォーム ${f.path}`, url: f.url, icon: 'fas fa-clipboard-list' })),
     ...endpoints.map((e) => ({
       title: `${e.method} ${e.url} をコピー`,
       url: e.url,
@@ -106,6 +128,7 @@ function buildItem(entry, code, links) {
     `[${code}] ${workflow.name}`,
     summary && summary !== workflow.name ? summary : null,
     ...endpoints.map((e) => `${e.method} /webhook/${e.path}`),
+    ...forms.map((f) => `FORM /form/${f.path}`),
   ]
     .filter(Boolean)
     .join(' | ');
@@ -113,11 +136,14 @@ function buildItem(entry, code, links) {
   const item = {
     title: shortTitle(workflow.name),
     description,
-    url: workflow.id
-      ? `${links.n8nBaseUrl.replace(/\/+$/, '')}/workflow/${workflow.id}`
-      : links.n8nBaseUrl,
-    icon: endpoints.length > 0 ? 'fas fa-plug' : 'fas fa-cog',
-    tags: [code, ...endpoints.map((e) => e.method)],
+    url: forms.length > 0 ? forms[0].url : editorUrl,
+    icon:
+      forms.length > 0
+        ? 'fas fa-clipboard-list'
+        : endpoints.length > 0
+          ? 'fas fa-plug'
+          : 'fas fa-cog',
+    tags: [code, ...endpoints.map((e) => e.method), ...(forms.length > 0 ? ['FORM'] : [])],
   };
   if (subItems.length > 0) item.subItems = subItems;
   return item;
@@ -181,5 +207,6 @@ module.exports = {
   shortTitle,
   fillLinks,
   webhookEndpoints,
+  formEndpoints,
   buildDashyConfig,
 };

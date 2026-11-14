@@ -10,6 +10,7 @@ n8n のワークフロー（JSON）と、JavaScript / Python のカスタムロ�
 | [project-structure.md](project-structure.md) | フォルダ構成と各ファイルの役割 | どこに何を置くか迷ったとき |
 | [development-workflow.md](development-workflow.md) | ワークフロー・Code ノード・Python 処理の開発手順 | 機能を追加・変更するとき |
 | [design-driven-development.md](design-driven-development.md) | 設計書（`designs/`）からの自動構築とテストデプロイ | Claude にワークフローを作らせるとき |
+| [studio.md](studio.md) | Workflow Studio（ブラウザから設計書・対話でアプリを作る） | Dashy の「アプリ作成」から作るとき |
 | [secrets.md](secrets.md) | API キー・認証情報の管理（`secrets/`） | 外部サービスと連携するとき |
 | [dashboard.md](dashboard.md) | Dashy のダッシュボードと分類コード | 作ったワークフローを一覧したいとき・分類を追加するとき |
 | [ci-cd.md](ci-cd.md) | GitHub Actions で実行されるチェック | CI が落ちたとき |

@@ -4,6 +4,9 @@
 
 ## 使い方
 
+ブラウザから作る場合は、Workflow Studio（http://localhost:3100、Dashy の「アプリ作成」）で、設計書の編集・保存・構築ができます。
+ラフなアイデアから対話で設計書を作ることもできます（[doc/studio.md](../doc/studio.md)）。以下はコマンドで行う場合の手順です。
+
 1. `_TEMPLATE.md` をコピーして `designs/<id>.md` を作る（`<id>` は kebab-case。`workflows/<id>.json` になる）
    ```bash
    cp designs/_TEMPLATE.md designs/order-notify.md

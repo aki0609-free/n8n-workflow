@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * ローカル環境（n8n・PostgreSQL・Dashy）を一括で起動し、使える状態になるまで待って URL を表示する。
+ * ローカル環境（n8n・PostgreSQL・Dashy・Workflow Studio）を一括で起動し、使える状態になるまで待って URL を表示する。
  *
  *   npm run up               起動 → ヘルスチェック → URL とワークフロー一覧を表示
  *   npm run up -- --import   起動後に workflows/*.json をすべて n8n にインポートする
  *                            （n8n の UI で編集してまだエクスポートしていない変更は上書きされる）
  *   npm run down             停止（データは残る）
  *
- * ポートは環境変数 N8N_PORT / DASHY_PORT（未指定なら 5678 / 4000）。.env は読まない。
+ * ポートは環境変数 N8N_PORT / DASHY_PORT / STUDIO_PORT（未指定なら 5678 / 4000 / 3100）。.env は読まない。
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -19,6 +19,7 @@ const withImport = args.includes('--import');
 
 const n8nUrl = `http://localhost:${process.env.N8N_PORT || 5678}`;
 const dashyUrl = `http://localhost:${process.env.DASHY_PORT || 4000}`;
+const studioUrl = `http://localhost:${process.env.STUDIO_PORT || 3100}`;
 
 function run(command, commandArgs) {
   const result = spawnSync(command, commandArgs, { cwd: ROOT, stdio: 'inherit' });
@@ -89,6 +90,13 @@ function listWorkflows() {
     process.exit(1);
   }
 
+  console.log('\n▶ Workflow Studio を起動');
+  const studio = spawnSync('node', ['scripts/studio-ctl.js', 'start'], {
+    cwd: ROOT,
+    stdio: 'inherit',
+  });
+  const studioOk = studio.status === 0;
+
   if (withImport) {
     console.log('\n▶ ワークフローをインポート');
     run('bash', ['scripts/n8n-import.sh']);
@@ -99,7 +107,9 @@ function listWorkflows() {
   console.log(
     `  Dashy    ${dashyUrl}${dashyOk ? '' : '（応答なし。少し待ってから開いてください）'}`,
   );
-  console.log('  Studio   未提供（段階 2 で追加予定）');
+  console.log(
+    `  Studio   ${studioUrl}${studioOk ? '' : '（起動失敗。.studio/studio.log を確認）'}`,
+  );
 
   const workflows = listWorkflows();
   if (workflows.length > 0) {

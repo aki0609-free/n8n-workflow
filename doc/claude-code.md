@@ -10,6 +10,8 @@ flowchart TD
   M -->|Code ノード・Python の実装とテスト| C[code-node-engineer]
   M -->|仕様書の作成・更新| S[n8n-spec-writer]
   M -->|ローカル n8n への反映| K[/import-workflow スキル/]
+  ST["Workflow Studio<br/>対話から作成"] -->|claude -p --agent| I[design-interviewer]
+  I -->|設計書の下書き| D
   D["designs/*.md"] -->|/build-from-design| M
 ```
 
@@ -18,6 +20,7 @@ flowchart TD
 | `n8n-workflow-expert` | ワークフローの設計、JSON の作成と検証、他のエージェントへの依頼。`settings.json` の `agent` でデフォルトに指定 | `workflows/` | すべて |
 | `code-node-engineer` | Code ノードの JS と Python 処理の実装、Jest / pytest のテスト作成 | `src/`、`tests/` | Read / Write / Edit / Glob / Grep / Bash |
 | `n8n-spec-writer` | 変更されたワークフローや処理を読み取り、仕様書を作成・更新する（コードは変更しない） | `doc/specifications/` | Read / Write / Edit / Glob / Grep / Bash |
+| `design-interviewer` | ラフなアイデアを聞き取り、設計書の下書きを返す。Workflow Studio の「対話から作成」が `claude -p --agent design-interviewer` で使う（ファイルは書かない） | `designs/`（読み取りのみ） | Read / Glob / Grep / n8n MCP のノード参照 |
 
 定義ファイルは `.claude/agents/*.md` です。
 
@@ -76,7 +79,7 @@ Claude は推測でノードのパラメータを書かずに、n8n から正し
 
 > 「確認なし（推奨）」のツールは、権限の付与にあたるため Claude からは `.claude/settings.json` に追加していません。
 > 毎回の確認を省きたい場合は、各自で `permissions.allow` に `mcp__n8n__search_nodes` などを追加してください。
-> `npm run design:build -- <file> --auto` では、`scripts/design.js` の `AUTO_ALLOWED_TOOLS` でこれらと `execute_workflow` を許可しています。
+> `npm run design:build -- <file> --auto` では、`scripts/lib/claude-cli.js` の `AUTO_ALLOWED_TOOLS` でこれらと `execute_workflow` を許可しています。
 
 ### ルール
 - ワークフローの正は `workflows/*.json`。n8n への反映は `npm run n8n:import` で行い、MCP で n8n 上のワークフローを直接変更しない

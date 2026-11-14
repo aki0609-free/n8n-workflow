@@ -9,7 +9,7 @@
 links:
   # ブラウザから開く n8n の URL（.env の N8N_PORT を変えた場合はここも変える）
   n8nBaseUrl: http://localhost:5678
-  # Workflow Studio（アプリ作成用 Web サイト。段階 2 で提供）
+  # Workflow Studio（アプリ作成用 Web サイト。npm run up / npm run studio で起動。doc/studio.md）
   studioUrl: http://localhost:3100
   # 仕様書・設計書へのリンク先（GitHub）
   repoUrl: https://github.com/aki0609-free/n8n-workflow

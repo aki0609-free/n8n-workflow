@@ -29,7 +29,8 @@ npm run n8n:up        # http://localhost:5678
 | Code ノード埋め込み更新 | `npm run sync:code`（CI は `npm run sync:code:check`） |
 | ワークフロー構造の出力 | `npm run describe -- workflows/<file>.json`（`--json` も可） |
 | CI 相当（JS 側一括） | `npm run ci` |
-| 一括起動（n8n・DB・Dashy、起動待ち・URL 表示） | `npm run up`（`-- --import` でワークフローも取り込む）/ 停止 `npm run down` |
+| 一括起動（n8n・DB・Dashy・Studio、起動待ち・URL 表示） | `npm run up`（`-- --import` でワークフローも取り込む）/ 停止 `npm run down` |
+| Workflow Studio（アプリ作成サイト :3100） | `npm run studio`（フォアグラウンド）/ `npm run studio:start` / `npm run studio:stop` |
 | n8n 起動 / 停止 / ログ | `npm run n8n:up` / `npm run n8n:down` / `npm run n8n:logs` |
 | n8n へインポート | `npm run n8n:import -- workflows/<file>.json`（引数省略で全件） |
 | n8n からエクスポート | `npm run n8n:export -- <workflowId>`（引数省略で全件） |
@@ -42,6 +43,7 @@ npm run n8n:up        # http://localhost:5678
 ## アーキテクチャ
 ```
 designs/                      ワークフロー設計書（入力）。_TEMPLATE.md の構成で書く
+studio/                       Workflow Studio（設計書・対話からアプリを作る Web サイト。claude -p を呼ぶ）
 workflows/                    n8n ワークフロー JSON（import/export 対象、コンテナにマウント）
 config/                       secrets.example.env（キー一覧）・credentials.template.json（Credential 定義）
                               categories.yml（分類コード）・dashboard.yml（Dashy の固定部分）
@@ -72,6 +74,7 @@ doc/specifications/           ワークフローごとの仕様書（n8n-spec-wr
 - サブエージェント:
   - `code-node-engineer` … Code ノード JS / Python の実装と単体テスト
   - `n8n-spec-writer` … ワークフロー・処理の変更を読み取り `doc/specifications/<name>.md` を作成・更新
+  - `design-interviewer` … Workflow Studio の「対話から作成」で、聞き取りから設計書の下書きを作る（書き込み不可）
 - スキル:
   - `build-from-design` … 設計書から構築・テストデプロイ・仕様書作成まで一括実行
   - `import-workflow` … ローカル n8n への CLI インポート

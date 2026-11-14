@@ -12,60 +12,10 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const YAML = require('yaml');
 const { parseFrontMatter, checkBuildable, listDesigns } = require('./lib/design-doc');
+const { buildArgs, childEnv } = require('./lib/claude-cli');
 
 const ROOT = path.resolve(__dirname, '..');
 const [command, ...rest] = process.argv.slice(2);
-
-// --auto（非対話モード）で Claude に許可するツール。.claude/settings.json の deny は引き続き有効
-const AUTO_ALLOWED_TOOLS = [
-  'Read',
-  'Write',
-  'Edit',
-  'MultiEdit',
-  'Glob',
-  'Grep',
-  'Agent',
-  'Skill',
-  'Bash(npm run:*)',
-  'Bash(npm test:*)',
-  'Bash(npm test)',
-  'Bash(node scripts/validate-workflows.js:*)',
-  'Bash(node scripts/sync-code-nodes.js:*)',
-  'Bash(node scripts/describe-workflow.js:*)',
-  'Bash(node scripts/n8n-test-run.js:*)',
-  'Bash(node -e:*)',
-  'Bash(bash scripts/n8n-import.sh:*)',
-  'Bash(bash scripts/n8n-credentials.sh:*)',
-  'Bash(.venv/bin/ruff:*)',
-  'Bash(.venv/bin/pytest:*)',
-  'Bash(docker compose ps:*)',
-  'Bash(docker compose up:*)',
-  'Bash(docker compose logs:*)',
-  'Bash(curl -sf http://localhost:*)',
-  'Bash(git status:*)',
-  'Bash(git diff:*)',
-  'Bash(date:*)',
-  // n8n MCP（.mcp.json）。ノード定義の取得・検証と、テスト実行だけを許可する。
-  // n8n 上のワークフローを作成・更新・公開・アーカイブするツールは許可しない（正は workflows/*.json）
-  'mcp__n8n__search_nodes',
-  'mcp__n8n__get_node_types',
-  'mcp__n8n__validate_node_config',
-  'mcp__n8n__get_workflow_best_practices',
-  'mcp__n8n__explore_node_resources',
-  'mcp__n8n__list_credentials',
-  'mcp__n8n__search_workflows',
-  'mcp__n8n__get_workflow_details',
-  'mcp__n8n__execute_workflow',
-  'mcp__n8n__get_workflow_execution',
-  'mcp__n8n__search_workflow_executions',
-];
-
-const AUTO_SYSTEM_PROMPT = [
-  'あなたは非対話モード（claude -p）で実行されています。ユーザーに質問することはできません。',
-  '- 設計書に未決事項や不足があり構築できない場合は、質問を設計書の「11. 未決事項」に追記して終了する。',
-  '- secrets:check で未入力のキーがある場合は、Phase 2〜3 まで進めたうえで、記入が必要なキーを報告して終了する。',
-  '- 最後に、実施内容・テスト結果・ユーザーが行うべきことを簡潔に出力する。',
-].join('\n');
 
 function list() {
   const designs = listDesigns(ROOT);
@@ -121,23 +71,12 @@ function build(args) {
     return Promise.resolve(1);
   }
 
-  const prompt = `/build-from-design ${rel}`;
-  const claudeArgs = auto
-    ? [
-        '-p',
-        prompt,
-        '--permission-mode',
-        'acceptEdits',
-        '--allowedTools',
-        ...AUTO_ALLOWED_TOOLS,
-        '--append-system-prompt',
-        AUTO_SYSTEM_PROMPT,
-      ]
-    : [prompt];
+  // --auto の許可ツールとシステムプロンプトは scripts/lib/claude-cli.js で管理する
+  const claudeArgs = auto ? buildArgs(rel) : [`/build-from-design ${rel}`];
 
   console.log(`▶ Claude Code で ${rel} を構築します（${auto ? '非対話モード' : '対話モード'}）`);
   return new Promise((resolve) => {
-    const child = spawn('claude', claudeArgs, { cwd: ROOT, stdio: 'inherit' });
+    const child = spawn('claude', claudeArgs, { cwd: ROOT, stdio: 'inherit', env: childEnv() });
     child.on('error', (err) => {
       console.error(
         err.code === 'ENOENT'

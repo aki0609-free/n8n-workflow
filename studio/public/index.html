@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Workflow Studio</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">◆</span>
+        <div>
+          <h1>Workflow Studio</h1>
+          <p class="sub">設計書や対話から n8n ワークフローを作る</p>
+        </div>
+      </div>
+      <nav class="links">
+        <span id="billing" class="chip" hidden></span>
+        <a id="link-dashy" href="http://localhost:4000" target="_blank" rel="noopener">Dashy</a>
+        <a id="link-n8n" href="http://localhost:5678" target="_blank" rel="noopener">n8n</a>
+      </nav>
+    </header>
+
+    <div class="tabs" role="tablist">
+      <button role="tab" class="tab" data-tab="design" aria-selected="true">設計書から作成</button>
+      <button role="tab" class="tab" data-tab="chat" aria-selected="false">対話から作成</button>
+    </div>
+
+    <main>
+      <!-- 設計書から作成 -->
+      <section id="tab-design" class="panel" role="tabpanel">
+        <aside class="sidebar">
+          <div class="sidebar-head">
+            <h2>設計書</h2>
+            <button id="btn-new" class="btn small">＋ 新規作成</button>
+          </div>
+          <ul id="design-list" class="design-list"></ul>
+          <p class="hint">
+            status が <b>ready</b> の設計書を構築できます。書き方は
+            <code>designs/README.md</code> を参照してください。
+          </p>
+        </aside>
+
+        <div class="editor-area">
+          <div class="editor-head">
+            <div>
+              <div id="editor-file" class="file-label">設計書を選ぶか、新規作成してください</div>
+              <ul id="editor-problems" class="problems"></ul>
+            </div>
+            <div class="actions">
+              <button id="btn-save" class="btn" disabled>保存</button>
+              <button id="btn-build" class="btn primary" disabled>構築を開始</button>
+            </div>
+          </div>
+          <textarea
+            id="editor"
+            class="editor"
+            spellcheck="false"
+            placeholder="ここに設計書（Markdown）が表示されます"
+            disabled
+          ></textarea>
+
+          <div id="job" class="job" hidden>
+            <div class="job-head">
+              <div>
+                <strong id="job-label"></strong>
+                <span id="job-status" class="status"></span>
+              </div>
+              <button id="btn-cancel" class="btn small danger">中止</button>
+            </div>
+            <ol id="job-log" class="job-log"></ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- 対話から作成 -->
+      <section id="tab-chat" class="panel chat-panel" role="tabpanel" hidden>
+        <div class="chat-area">
+          <div class="chat-head">
+            <p class="hint">
+              作りたいものをざっくり書いてください。Claude が質問しながら設計書にまとめます。
+            </p>
+            <button id="btn-chat-reset" class="btn small">新しい会話</button>
+          </div>
+          <ol id="chat-log" class="chat-log"></ol>
+          <form id="chat-form" class="chat-form">
+            <textarea
+              id="chat-input"
+              rows="3"
+              placeholder="例: 問い合わせフォームを作って、送信されたら内容を整形して Slack に通知したい（Ctrl+Enter で送信）"
+            ></textarea>
+            <div class="chat-actions">
+              <span id="chat-status" class="status"></span>
+              <button id="btn-chat-cancel" type="button" class="btn small danger" hidden>
+                中止
+              </button>
+              <button id="btn-chat-send" class="btn primary" type="submit">送信</button>
+            </div>
+          </form>
+        </div>
+
+        <aside id="draft" class="draft" hidden>
+          <div class="draft-head">
+            <h2>設計書の下書き</h2>
+            <div id="draft-file" class="file-label"></div>
+            <ul id="draft-problems" class="problems"></ul>
+          </div>
+          <textarea id="draft-editor" class="editor" spellcheck="false"></textarea>
+          <div class="actions">
+            <button id="btn-draft-save" class="btn">保存</button>
+            <button id="btn-draft-build" class="btn primary">保存して構築</button>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

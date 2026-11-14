@@ -7,6 +7,7 @@ const {
   shortTitle,
   fillLinks,
   webhookEndpoints,
+  formEndpoints,
   buildDashyConfig,
 } = require('../../scripts/lib/dashy');
 
@@ -129,6 +130,41 @@ describe('buildDashyConfig', () => {
         icon: 'fas fa-drafting-compass',
       },
     ]);
+  });
+
+  test('form workflows open the form from the card and keep the editor as a sub item', () => {
+    const formWorkflow = {
+      id: 'FormWf0000000001',
+      name: '備品貸出申請フォーム',
+      tags: [{ name: 'OPS' }],
+      nodes: [
+        {
+          name: 'Form Trigger',
+          type: 'n8n-nodes-base.formTrigger',
+          parameters: { formTitle: '備品貸出申請', options: { path: 'equipment-loan' } },
+        },
+      ],
+    };
+    expect(formEndpoints(formWorkflow, links.n8nBaseUrl)).toEqual([
+      { path: 'equipment-loan', url: 'http://localhost:5678/form/equipment-loan' },
+    ]);
+    const { config } = buildDashyConfig({
+      dashboard: { links },
+      categories,
+      workflows: [{ name: 'f', workflow: formWorkflow, hasSpec: false, designPath: null }],
+    });
+    const item = config.sections[0].items[0];
+    expect(item).toMatchObject({
+      url: 'http://localhost:5678/form/equipment-loan',
+      icon: 'fas fa-clipboard-list',
+      tags: ['OPS', 'FORM'],
+    });
+    expect(item.description).toContain('FORM /form/equipment-loan');
+    expect(item.subItems[0]).toEqual({
+      title: 'n8n で編集',
+      url: 'http://localhost:5678/workflow/FormWf0000000001',
+      icon: 'fas fa-pen',
+    });
   });
 
   test('puts workflows without exactly one category into 未分類 with a warning', () => {

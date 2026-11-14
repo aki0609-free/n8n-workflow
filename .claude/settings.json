@@ -31,7 +31,17 @@
       "Bash(npm run design:list)",
       "Bash(npm run dashy:sync:*)",
       "Bash(node scripts/dashy-sync.js:*)",
-      "Bash(node scripts/secrets.js check:*)"
+      "Bash(node scripts/secrets.js check:*)",
+      "mcp__n8n__search_nodes",
+      "mcp__n8n__get_node_types",
+      "mcp__n8n__validate_node_config",
+      "mcp__n8n__get_workflow_best_practices",
+      "mcp__n8n__explore_node_resources",
+      "mcp__n8n__list_credentials",
+      "mcp__n8n__search_workflows",
+      "mcp__n8n__get_workflow_details",
+      "mcp__n8n__get_workflow_execution",
+      "mcp__n8n__search_workflow_executions"
     ],
     "ask": [
       "Bash(npm run n8n:import:*)",

@@ -57,6 +57,7 @@ npm run n8n:logs      # ログの確認（Ctrl+C で終了）
 `npm run n8n:up` は起動だけを行います（待ち合わせや URL の表示はしません）。
 
 ブラウザで http://localhost:5678 を開き、初回はオーナーアカウントを作成します。
+アプリ（ワークフロー）をブラウザから作る Workflow Studio は http://localhost:3100 です（[studio.md](studio.md)）。
 ワークフローの一覧（Dashy）は http://localhost:4000 で開けます（[dashboard.md](dashboard.md)）。
 
 続けて、次の 2 つを行います。
