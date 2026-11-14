@@ -23,8 +23,11 @@ owner: 担当者名
 ## 2. トリガー
 
 <!--
-種類: webhook | schedule | manual | app-event（例: Slack のメッセージ受信）
+種類: webhook | form | schedule | manual | app-event（例: Slack のメッセージ受信）
 - webhook  : メソッド・パス・認証の有無・応答方法（すぐ 200 を返す / 処理結果を返す）
+- form     : n8n のフォーム（http://localhost:5678/form/<パス>）。パス・フォームのタイトル・送信後の表示。
+             項目は「3. 入力データ」に fieldName（英小文字の snake_case）・ラベル・種類・必須で書く
+             種類: text / email / number / textarea / date / dropdown / radio / checkbox / file / hiddenField / password
 - schedule : cron 式またはわかりやすい表現（例: 平日 9:00 JST）
 -->
 
@@ -116,7 +119,11 @@ owner: 担当者名
 テストデプロイの合否判定に使う（tests/workflows/<id>.cases.json に変換される）。
 - webhook トリガーの場合は request / expect を JSON で書く。expect.json は部分一致（確認したい項目だけ書く）
 - 外部サービスに副作用がある処理（Slack 投稿など）は、テストで実際に実行されることに注意して書く
-- webhook 以外のトリガーは、確認方法を文章で書く（Claude は有効化の成否までを自動確認する）
+- form / schedule / manual トリガーは、request の代わりに trigger（トリガーノード名）と inputs を書く。
+  Claude が n8n MCP で実行し、expect.node（確認するノード名）の出力を expect.json と部分一致で比べる
+    { "trigger": "Form Trigger", "inputs": { "formData": { "name": "Alice" } },
+      "expect": { "status": "success", "node": "Build Reply", "json": { "accepted": true } } }
+  schedule / manual は inputs を省略する。出力を自動で確かめられないものは、確認方法を文章で書く
 -->
 
 ### Case 1: 正常系の説明

@@ -110,6 +110,15 @@ describe('validateWorkflow', () => {
     expect(validateWorkflow(wf(['SLS', 'OPS']), opts)[0]).toContain('found: SLS, OPS');
   });
 
+  test('requires settings.availableInMCP when requireMcpAccess is given', () => {
+    const wf = (settings) => ({ name: 'wf', nodes: [node()], connections: {}, settings });
+    const opts = { requireMcpAccess: true };
+    expect(validateWorkflow(wf({ executionOrder: 'v1', availableInMCP: true }), opts)).toEqual([]);
+    expect(validateWorkflow(wf({ executionOrder: 'v1' }), opts)[0]).toContain('availableInMCP');
+    expect(validateWorkflow(wf(undefined), opts)[0]).toContain('availableInMCP');
+    expect(validateWorkflow(wf(undefined))).toEqual([]);
+  });
+
   test('all workflows in workflows/ are valid against the credentials template and categories', () => {
     const root = path.resolve(__dirname, '../..');
     const knownCredentials = JSON.parse(
@@ -124,7 +133,11 @@ describe('validateWorkflow', () => {
       const workflow = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
       expect({
         file,
-        errors: validateWorkflow(workflow, { knownCredentials, categoryCodes }),
+        errors: validateWorkflow(workflow, {
+          knownCredentials,
+          categoryCodes,
+          requireMcpAccess: true,
+        }),
       }).toEqual({
         file,
         errors: [],

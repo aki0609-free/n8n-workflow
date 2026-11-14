@@ -1,6 +1,15 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { diffSubset, buildRequest, runCase } = require('../../scripts/lib/case-runner');
+const { diffSubset, buildRequest, runCase, isMcpCase } = require('../../scripts/lib/case-runner');
+
+describe('isMcpCase', () => {
+  test('is true only for cases with a trigger name and no request', () => {
+    expect(isMcpCase({ name: 'f', trigger: 'Form Trigger', inputs: { formData: {} } })).toBe(true);
+    expect(isMcpCase({ name: 's', trigger: 'Schedule' })).toBe(true);
+    expect(isMcpCase({ name: 'h', request: { path: 'p' } })).toBe(false);
+    expect(isMcpCase({ name: 'x', request: { path: 'p' }, trigger: 'Webhook' })).toBe(false);
+  });
+});
 
 describe('diffSubset', () => {
   test('matches nested subsets and reports mismatched paths', () => {
@@ -91,9 +100,16 @@ describe('tests/workflows/*.cases.json', () => {
     const webhookPaths = workflow.nodes
       .filter((n) => n.type === 'n8n-nodes-base.webhook')
       .map((n) => n.parameters.path);
+    const nodeNames = workflow.nodes.map((n) => n.name);
     for (const c of cases) {
       expect(typeof c.name).toBe('string');
-      expect(webhookPaths).toContain(c.request.path.replace(/^\/+/, ''));
+      if (isMcpCase(c)) {
+        // MCP ケース: トリガー名と、判定対象のノード名がワークフローに存在すること
+        expect(nodeNames).toContain(c.trigger);
+        if (c.expect && c.expect.node !== undefined) expect(nodeNames).toContain(c.expect.node);
+      } else {
+        expect(webhookPaths).toContain(c.request.path.replace(/^\/+/, ''));
+      }
     }
   });
 });

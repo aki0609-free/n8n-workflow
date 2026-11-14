@@ -53,7 +53,11 @@ for (const file of files) {
     failed += 1;
     continue;
   }
-  const errors = validateWorkflow(workflow, { knownCredentials, categoryCodes });
+  const errors = validateWorkflow(workflow, {
+    knownCredentials,
+    categoryCodes,
+    requireMcpAccess: true,
+  });
   if (errors.length > 0) {
     failed += 1;
     console.error(`✗ ${rel}`);

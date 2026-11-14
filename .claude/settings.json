@@ -44,7 +44,13 @@
       "Bash(bash scripts/n8n-credentials.sh:*)",
       "Bash(node scripts/n8n-test-run.js:*)",
       "Bash(docker compose up:*)",
-      "Bash(docker compose down:*)"
+      "Bash(docker compose down:*)",
+      "mcp__n8n__execute_workflow",
+      "mcp__n8n__create_workflow_from_code",
+      "mcp__n8n__update_workflow",
+      "mcp__n8n__publish_workflow",
+      "mcp__n8n__unpublish_workflow",
+      "mcp__n8n__archive_workflow"
     ],
     "deny": [
       "Read(./.env)",

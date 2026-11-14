@@ -7,11 +7,11 @@
 ```mermaid
 flowchart TD
   A["designs/&lt;id&gt;.md を書く<br/>status: ready"] --> B["npm run design:build -- designs/&lt;id&gt;.md<br/>（= /build-from-design）"]
-  B --> P0["Phase 0: 設計書の確認<br/>未決事項があれば質問"]
+  B --> P0["Phase 0: 設計書の確認<br/>未決事項があれば質問・n8n MCP の接続確認"]
   P0 --> P1["Phase 1: 認証情報の確認<br/>secrets:check（不足があれば記入を依頼）"]
   P1 --> P2["Phase 2: Code ノード実装 + 単体テスト<br/>code-node-engineer"]
-  P2 --> P3["Phase 3: workflows/&lt;id&gt;.json 構築<br/>tests/workflows/&lt;id&gt;.cases.json 作成<br/>validate・npm test"]
-  P3 --> P4["Phase 4: テストデプロイ<br/>Credential 投入 → import → 有効化 → テストケース実行"]
+  P2 --> P3["Phase 3: workflows/&lt;id&gt;.json 構築<br/>MCP でノード定義を取得・検証<br/>tests/workflows/&lt;id&gt;.cases.json 作成<br/>validate・npm test"]
+  P3 --> P4["Phase 4: テストデプロイ<br/>Credential 投入 → import → 有効化 → HTTP ケース<br/>→ MCP ケース（execute_workflow）"]
   P4 -->|失敗（最大3回）| P2
   P4 --> P5["Phase 5: 仕様書作成（n8n-spec-writer）<br/>設計書を status: built に更新"]
 ```
@@ -31,9 +31,13 @@ flowchart TD
 ## 事前準備（初回のみ）
 
 1. ローカル n8n を起動し、オーナーアカウントを作成する（[getting-started.md](getting-started.md)）
-2. n8n の UI で **Settings > n8n API** を開いて API キーを発行し、`secrets/secrets.env` の `N8N_API_KEY` に記入する
-   （テストデプロイで、ワークフローの有効化・無効化に使います）
-3. 設計書で使うサービスの認証情報を `secrets/secrets.env` に記入する（[secrets.md](secrets.md)）
+2. n8n MCP を接続する（[claude-code.md の「初回の接続」](claude-code.md#初回の接続1-回だけ)）。
+   Claude はこれでノードの正しい定義を取り出して検証し、Form などのワークフローもテストで実行できます
+3. n8n の UI で **Settings > n8n API** を開いて API キーを発行し、`secrets/secrets.env` の `N8N_API_KEY` に記入する
+   （Webhook のテストデプロイで、ワークフローの有効化・無効化に使います。未入力でも、MCP で処理結果までは確認できます）
+4. 設計書で使うサービスの認証情報を `secrets/secrets.env` に記入する（[secrets.md](secrets.md)）
+
+すべて n8n の無料版と Claude Code のサブスクリプションの範囲で動きます。n8n の AI ビルダーは使いません。
 
 ## 設計書の書き方
 
@@ -84,9 +88,35 @@ flowchart TD
 }
 ```
 
+### Webhook 以外のトリガー（MCP ケース）
+
+Form・Schedule・Manual トリガーのワークフローは、`request` の代わりに `trigger`（トリガーノード名）を書きます。
+`n8n:test` はこのケースをスキップし（`skipped (MCP)` と表示）、Claude が n8n MCP の `execute_workflow` で実行して判定します。
+
+```json
+{
+  "name": "フォーム送信で受付番号が作られる",
+  "trigger": "Form Trigger",
+  "inputs": { "formData": { "name": "Alice", "email": "alice@example.com" } },
+  "expect": { "status": "success", "node": "Build Reply", "json": { "accepted": true } }
+}
+```
+
+| 項目 | 内容 |
+| --- | --- |
+| `trigger` | トリガーノードの名前 |
+| `inputs` | MCP の `execute_workflow` に渡す入力。Form は `formData`、Webhook は `webhookData`（`method`・`body`・`query`・`headers`）。Schedule・Manual は省略 |
+| `expect.status` | 実行のステータス（`success` / `error`） |
+| `expect.node` / `expect.json` | 指定したノードの出力の 1 件目を、`json` と部分一致で比べる |
+
+Form Trigger の出力は、各項目が `fieldName` をキーにして `$json` の直下に並び、`submittedAt` と `formMode` が自動で付きます。
+MCP から渡した `formData` は型変換や必須チェックを通らないため、ブラウザから送ったときの細かい挙動は、
+フォーム（`http://localhost:5678/form/<path>`）から実際に送って確認してください。
+
 ### 注意点
 - テストでは実際にワークフローが動きます。Slack への投稿などの副作用も発生するため、テスト用のチャンネルやアカウントを `secrets/secrets.env` に設定しておくと安全です。
-- Webhook 以外のトリガー（スケジュールなど）は、有効化できるかどうかまでを自動で確認します。実行結果の確認は、設計書に書いた方法で行ってください。
+- MCP ケースの無い Webhook 以外のトリガー（スケジュールなど）は、有効化できるかどうかまでを自動で確認します。実行結果の確認は、設計書に書いた方法で行ってください。
+- n8n MCP が未接続の場合、Claude は MCP ケースを実行せず、その旨を報告します。
 - 本番環境へのデプロイは行いません（ローカル n8n のみ）。
 
 ## 関連ファイル

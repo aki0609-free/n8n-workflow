@@ -6,7 +6,8 @@
  *
  * 1. tests/workflows/<name>.cases.json を読み込む
  * 2. n8n Public API（N8N_API_KEY）でワークフローの存在確認・有効化
- * 3. 各ケースのリクエストを本番 Webhook URL（/webhook/<path>）へ送信し、期待値と照合
+ * 3. 各 HTTP ケースのリクエストを本番 Webhook URL（/webhook/<path>）へ送信し、期待値と照合
+ *    MCP ケース（`trigger` を持つもの）はスキップして一覧だけ表示する（Claude が MCP で実行する）
  * 4. もともと無効だった場合は無効に戻す（--keep-active で維持）
  *
  * N8N_API_KEY は環境変数、または secrets/secrets.env から読む（値は表示しない）。
@@ -14,7 +15,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { parseEnv } = require('./lib/secrets');
-const { runCase } = require('./lib/case-runner');
+const { runCase, isMcpCase } = require('./lib/case-runner');
 
 const ROOT = path.resolve(__dirname, '..');
 const args = process.argv.slice(2);
@@ -33,7 +34,9 @@ const name = path.basename(workflowFile, '.json');
 const workflow = JSON.parse(fs.readFileSync(path.resolve(workflowFile), 'utf8'));
 const casesFile = path.join(ROOT, 'tests', 'workflows', `${name}.cases.json`);
 if (!fs.existsSync(casesFile)) fail(`test cases not found: ${path.relative(ROOT, casesFile)}`);
-const { cases = [] } = JSON.parse(fs.readFileSync(casesFile, 'utf8'));
+const { cases: allCases = [] } = JSON.parse(fs.readFileSync(casesFile, 'utf8'));
+const cases = allCases.filter((c) => !isMcpCase(c));
+const mcpCases = allCases.filter(isMcpCase);
 if (!workflow.id) fail(`${workflowFile} has no "id"`);
 
 const secretsPath = path.join(ROOT, 'secrets', 'secrets.env');
@@ -98,6 +101,9 @@ async function setPublished(id, publish) {
   const results = [];
   try {
     if (cases.length === 0) console.log('  (no webhook test cases; activation check only)');
+    for (const c of mcpCases) {
+      console.log(`  · ${c.name}  [MCP ケース: Claude が execute_workflow で実行]`);
+    }
     for (const testCase of cases) {
       const result = await runCase(testCase, { baseUrl });
       results.push(result);
@@ -117,6 +123,7 @@ async function setPublished(id, publish) {
   }
 
   const failed = results.filter((r) => !r.ok).length;
-  console.log(`\n${results.length - failed} passed, ${failed} failed`);
+  const skipped = mcpCases.length ? `, ${mcpCases.length} skipped (MCP)` : '';
+  console.log(`\n${results.length - failed} passed, ${failed} failed${skipped}`);
   process.exit(failed > 0 ? 1 : 0);
 })().catch((err) => fail(err.message));

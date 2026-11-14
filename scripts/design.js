@@ -45,6 +45,19 @@ const AUTO_ALLOWED_TOOLS = [
   'Bash(git status:*)',
   'Bash(git diff:*)',
   'Bash(date:*)',
+  // n8n MCP（.mcp.json）。ノード定義の取得・検証と、テスト実行だけを許可する。
+  // n8n 上のワークフローを作成・更新・公開・アーカイブするツールは許可しない（正は workflows/*.json）
+  'mcp__n8n__search_nodes',
+  'mcp__n8n__get_node_types',
+  'mcp__n8n__validate_node_config',
+  'mcp__n8n__get_workflow_best_practices',
+  'mcp__n8n__explore_node_resources',
+  'mcp__n8n__list_credentials',
+  'mcp__n8n__search_workflows',
+  'mcp__n8n__get_workflow_details',
+  'mcp__n8n__execute_workflow',
+  'mcp__n8n__get_workflow_execution',
+  'mcp__n8n__search_workflow_executions',
 ];
 
 const AUTO_SYSTEM_PROMPT = [

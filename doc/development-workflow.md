@@ -22,6 +22,7 @@ flowchart LR
 3. `npm run n8n:export -- <workflowId>` で `workflows/<id>.json` に書き出す
    - 既存ファイル（例: `contacts-intake.json`）を更新する場合は、出力された内容を既存ファイルに反映し、`<id>.json` は削除する
 4. `git diff workflows/` で意図した変更だけが入っているか確認する
+5. `settings` に `"availableInMCP": true` が無ければ追加する（`npm run validate:workflows` で必須。n8n MCP から実行・テストするために使う）
 
 ### B. JSON を直接編集する（Claude Code に任せるとき・小さな修正のとき）
 - 必須項目と書き方は `.claude/agents/n8n-workflow-expert.md` の「ワークフロー JSON のルール」を参照してください。

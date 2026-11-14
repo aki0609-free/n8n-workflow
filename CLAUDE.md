@@ -29,6 +29,7 @@ npm run n8n:up        # http://localhost:5678
 | Code ノード埋め込み更新 | `npm run sync:code`（CI は `npm run sync:code:check`） |
 | ワークフロー構造の出力 | `npm run describe -- workflows/<file>.json`（`--json` も可） |
 | CI 相当（JS 側一括） | `npm run ci` |
+| 一括起動（n8n・DB・Dashy、起動待ち・URL 表示） | `npm run up`（`-- --import` でワークフローも取り込む）/ 停止 `npm run down` |
 | n8n 起動 / 停止 / ログ | `npm run n8n:up` / `npm run n8n:down` / `npm run n8n:logs` |
 | n8n へインポート | `npm run n8n:import -- workflows/<file>.json`（引数省略で全件） |
 | n8n からエクスポート | `npm run n8n:export -- <workflowId>`（引数省略で全件） |
@@ -64,6 +65,9 @@ doc/specifications/           ワークフローごとの仕様書（n8n-spec-wr
 3. CI の `sync:code:check` で埋め込み漏れを検出する
 
 ## Claude Code の構成
+- 前提: n8n の無料版（セルフホスト）と Claude Code のサブスクリプションの範囲で完結させる。n8n の AI ビルダー（クレジット制）や従量課金の API には依存しない
+- MCP: `.mcp.json` にローカル n8n の MCP サーバーを登録（OAuth）。ノード定義の取得・検証（`search_nodes` / `get_node_types` /
+  `validate_node_config`）と、テスト実行（`execute_workflow`）に使う。n8n 上のワークフローを MCP で直接作成・変更しない（正は `workflows/*.json`）
 - デフォルトエージェント: `n8n-workflow-expert`（`.claude/settings.json` の `agent`）
 - サブエージェント:
   - `code-node-engineer` … Code ノード JS / Python の実装と単体テスト
@@ -82,7 +86,7 @@ doc/specifications/           ワークフローごとの仕様書（n8n-spec-wr
 
 ## コーディング規約
 - ワークフロー JSON
-  - 固定の `id` を持たせる。`active: false`、`pinData: {}` でコミットする
+  - 固定の `id` を持たせる。`active: false`、`pinData: {}`、`settings.availableInMCP: true` でコミットする
   - `tags` に `config/categories.yml` の分類コードをちょうど 1 つ付ける（例: `[{ "name": "SLS" }]`）
   - Credential の実値・API キーを JSON に含めない。認証は `config/credentials.template.json` の固定 ID で参照し、
     設定値は `{{ $env.KEY }}` で参照する（詳細は `doc/secrets.md`）

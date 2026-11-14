@@ -64,10 +64,12 @@ function validateCredentialRefs(node, label, knownCredentials) {
  * @param {unknown} workflow パース済みのワークフロー
  * @param {{ knownCredentials?: { id: string, name: string, type: string }[] }} [options]
  *   knownCredentials を渡すと、ノードの Credential 参照がテンプレートに存在するか検証する
+ *   requireMcpAccess が true なら settings.availableInMCP: true を必須にする
+ *   （CLI でインポートしたワークフローを n8n MCP から実行・テストできるようにするため）
  * @returns {string[]} エラーメッセージの配列（空なら妥当）
  */
 function validateWorkflow(workflow, options = {}) {
-  const { knownCredentials, categoryCodes } = options;
+  const { knownCredentials, categoryCodes, requireMcpAccess } = options;
   const errors = [];
 
   if (!isPlainObject(workflow)) {
@@ -96,6 +98,13 @@ function validateWorkflow(workflow, options = {}) {
         }; available: ${categoryCodes.join(', ')})`,
       );
     }
+  }
+
+  if (
+    requireMcpAccess &&
+    !(isPlainObject(workflow.settings) && workflow.settings.availableInMCP === true)
+  ) {
+    errors.push('"settings.availableInMCP" must be true (n8n MCP から実行・テストするため)');
   }
 
   const names = new Set();

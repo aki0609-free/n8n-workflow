@@ -16,6 +16,8 @@
     "sync:code": "node scripts/sync-code-nodes.js",
     "sync:code:check": "node scripts/sync-code-nodes.js --check",
     "describe": "node scripts/describe-workflow.js",
+    "up": "node scripts/up.js",
+    "down": "docker compose down",
     "n8n:up": "node scripts/dashy-sync.js && docker compose up -d",
     "dashy:sync": "node scripts/dashy-sync.js",
     "n8n:down": "docker compose down",

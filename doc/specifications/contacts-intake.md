@@ -106,6 +106,8 @@ Webhook が受け取ったリクエストボディを Format Contacts に渡し�
 
 なし。
 
+ワークフロー設定 `settings.availableInMCP: true` により、CLI（`npm run n8n:import`）でインポートした後も n8n MCP サーバーから参照・実行できます（`npm run validate:workflows` で必須の設定）。
+
 ## 7. エラーハンドリングと制約
 
 - 不正なメールアドレスはエラーにせず `invalid` に入れて返します。
@@ -118,8 +120,14 @@ Webhook が受け取ったリクエストボディを Format Contacts に渡し�
 | テストファイル | 確認している内容 |
 | --- | --- |
 | `tests/javascript/format-contacts.test.js` | 正規化関数（メール・名前・電話）、ボディ形式ごとのレコード取り出し、`run` の出力形式（正常・不正・重複・空入力） |
-| `tests/javascript/workflow-validator.test.js` | `workflows/contacts-intake.json` の構造・Credential 参照・分類タグの妥当性 |
+| `tests/javascript/workflow-validator.test.js` | `workflows/contacts-intake.json` の構造・Credential 参照・分類タグ・`settings.availableInMCP` の妥当性 |
 | `tests/workflows/contacts-intake.cases.json` | テストデプロイ時の Webhook 呼び出し（正常系 2 件） |
+
+動作確認の方法は次の 2 通りです。
+
+- **テストデプロイ**（`npm run n8n:test -- workflows/contacts-intake.json`）: `tests/workflows/contacts-intake.cases.json` のケースを実行し、HTTP ステータスコードと応答本文を確認します。レスポンスの確認はこちらで行います。
+- **n8n MCP から実行**: Claude Code から n8n MCP の `execute_workflow` を `executionMode: "manual"`、`triggerNodeName: "Webhook"`、`inputs: { webhookData: { method: "POST", body: {...} } }` で呼び出します。公開（有効化）や `N8N_API_KEY` は不要です。各ノードの出力は確認できますが、HTTP のステータスコードと応答本文は確認できません。
+  - 確認例（2026-11-14）: `body: { "name": "Carol", "email": "carol@example.com" }` を送り、Format Contacts の出力が `{ "contacts": [{ "name": "Carol", "email": "carol@example.com", "phone": null }], "invalid": [], "summary": { "valid": 1, "invalid": 0 } }` になることを確認済み。
 
 ## 9. 補足（手動記述）
 
@@ -131,3 +139,4 @@ Webhook が受け取ったリクエストボディを Format Contacts に渡し�
 | --- | --- |
 | 2026-11-14 | 初版作成 |
 | 2026-11-14 | 分類コード `SMP` をタグとして追加 |
+| 2026-11-14 | `settings.availableInMCP: true` を追加（n8n MCP から参照・実行可能に）。n8n MCP の `execute_workflow` による動作確認方法を追記 |

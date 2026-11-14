@@ -14,8 +14,9 @@ model: inherit
 - Code ノードの **中身** の実装・単体テストは `code-node-engineer` サブエージェントに委譲する
 
 ## ワークフロー JSON のルール
-1. トップレベルは `id`, `name`, `nodes`, `connections`, `settings`（`"executionOrder": "v1"`）, `active: false` を持つ。
+1. トップレベルは `id`, `name`, `nodes`, `connections`, `settings`（`"executionOrder": "v1", "availableInMCP": true`）, `active: false` を持つ。
    - `id` は固定値にする（import は id で upsert されるため、毎回別ワークフローとして増殖するのを防ぐ）。
+   - `availableInMCP: true` が無いと、CLI でインポートしたワークフローを n8n MCP から実行・テストできない（`validate:workflows` で必須）。
 2. 各ノードは `id`（UUID v4）, `name`（ワークフロー内で一意）, `type`, `typeVersion`（数値）, `position`（`[x, y]`）, `parameters` を必ず持つ。
    - 左→右に 240px 間隔で配置し、分岐は y 方向に 200px ずらす。
 3. `connections` のキーと `node` はノードの **name** を参照する。ノード名を変更したら接続側も必ず更新する。
@@ -31,6 +32,30 @@ model: inherit
 6. `pinData` はコミットしない（空オブジェクトにする）。テスト用データは `tests/` 側に置く。
 7. Webhook ノードには固定の `webhookId`（UUID）と分かりやすい `path` を設定する。
 8. 外部 API 呼び出しノードには `retryOnFail` / `maxTries` / `waitBetweenTries` を検討し、失敗時の挙動を明示する。
+9. Form Trigger（`n8n-nodes-base.formTrigger`）は、各項目に `fieldName`（英小文字の snake_case）を必ず付ける。
+   送信内容は `$json.<fieldName>` に平らに並び、`submittedAt`・`formMode` が自動で付く（`body` の下には入らない）。
+   `options.path` を固定し、フォーム URL は `http://localhost:5678/form/<path>` になる。
+
+## n8n MCP の使い方（`.mcp.json` の `n8n`）
+前提: n8n の無料版（セルフホストの Community Edition）と Claude Code のサブスクリプションの範囲で完結させる。
+n8n の AI ビルダー（クレジット制・プラン依存）や、従量課金の API キーが必要な仕組みには依存しない。
+
+| 場面 | 使うツール |
+| --- | --- |
+| ノード選定 | `search_nodes`（type と resource / operation などの discriminator を確認） |
+| パラメータの正確な名前・構造 | `get_node_types`（discriminator を付けて呼ぶ。返ってきた version を `typeVersion` に使う） |
+| ノード単位の検証 | `validate_node_config`（`parameters` は JSON と同じ形。通るまで直してから JSON に書く） |
+| 設計の定石 | `get_workflow_best_practices`（technique を指定。分からなければ `list`） |
+| 実際の値（Slack のチャンネルなど） | `explore_node_resources`（Credential 投入済みのときだけ） |
+| 実行テスト | `get_workflow_details` → `execute_workflow`（`executionMode: "manual"`）→ `get_workflow_execution` |
+
+- ワークフローの正は `workflows/*.json`。n8n への反映は `npm run n8n:import` で行い、MCP の
+  `create_workflow_from_code` / `update_workflow` / `publish_workflow` で n8n 上のワークフローを直接作ったり変えたりしない。
+  例外は、ノードの出力形式を確かめるための一時的な検証用ワークフロー。名前に `(temp)` を付け、確認後に `archive_workflow` する。
+- MCP の `execute_workflow` で Form Trigger に `formData` を渡すと、値は型変換や必須チェックを通らずにそのまま出力になる。
+  ブラウザ送信時の細かい挙動（数値の型、ファイル項目）を確かめたいときはユーザーにフォームから送ってもらう。
+- MCP が使えない（`mcp__n8n__*` ツールが無い、未認証）場合は、従来どおり JSON を書いて `validate:workflows` で検証し、
+  報告に「MCP 未接続のためノード定義の照合をしていない」と明記する。接続手順は `doc/claude-code.md`。
 
 ## Code ノードの扱い
 - Code ノードのロジックは `src/javascript/code-nodes/<kebab-name>.js` に置き、ワークフロー側の `jsCode` は 1 行目を

@@ -38,8 +38,51 @@ contacts-intake の仕様書を作り直して
 
 | スキル | 呼び出し方 | 内容 |
 | --- | --- | --- |
-| `build-from-design` | `/build-from-design designs/xxx.md`、または「この設計書から作って」 | 設計書の確認 → 認証情報の確認 → Code 実装とテスト → JSON 構築 → テストデプロイ → 仕様書作成（[design-driven-development.md](design-driven-development.md)） |
-| `import-workflow` | `/import-workflow [workflows/xxx.json]`、または「n8n に反映して」 | コンテナの起動確認 → Code ノードの同期 → Credential 投入 → 検証 → `n8n import:workflow` → URL の案内 |
+| `build-from-design` | `/build-from-design designs/xxx.md`、または「この設計書から作って」 | 設計書の確認 → 認証情報の確認 → Code 実装とテスト → MCP でノード定義を照合・検証して JSON 構築 → テストデプロイ（HTTP ケース + MCP ケース）→ 仕様書作成（[design-driven-development.md](design-driven-development.md)） |
+| `import-workflow` | `/import-workflow [workflows/xxx.json]`、または「n8n に反映して」 | コンテナの起動確認 → Code ノードの同期 → Credential 投入 → 検証 → `n8n import:workflow` → MCP で取り込みを確認 → URL の案内 |
+
+## n8n MCP サーバー（`.mcp.json`）
+
+ローカル n8n の MCP サーバー（`http://localhost:5678/mcp-server/http`）を Claude Code に登録しています。
+Claude は推測でノードのパラメータを書かずに、n8n から正しい定義を取り出して検証してから JSON を書きます。
+また、Webhook 以外のトリガー（Form など）を持つワークフローもテストで実行できます。
+
+### 費用について
+このプロジェクトは、**n8n の無料版（セルフホストの Community Edition）と Claude Code のサブスクリプションの範囲で完結する** ことを前提にしています。
+
+| 仕組み | 費用 | 使い方 |
+| --- | --- | --- |
+| n8n の Instance-level MCP | 無料版で使える | 使う（ノード定義の取得・検証、テスト実行） |
+| Claude Code（対話・`claude -p`） | サブスクリプションの範囲 | 使う（構築・テスト・仕様書） |
+| n8n Public API（`N8N_API_KEY`） | 無料版で使える | 使う（Webhook のテストデプロイで公開・非公開を切り替える） |
+| n8n の AI Workflow Builder | クレジット制・プラン依存 | **使わない** |
+
+### 初回の接続（1 回だけ）
+1. `npm run n8n:up` で n8n を起動し、http://localhost:5678 の **Settings → Instance-level MCP** で **Enable MCP access** をオンにする
+2. リポジトリで Claude Code を起動する（VS Code では新しいセッションを開く）。「プロジェクトの MCP サーバー n8n を使うか」と聞かれたら許可する
+3. `/mcp` → `n8n` → **Authenticate**。ブラウザで n8n にログインしてアクセスを許可する（OAuth。トークンをファイルに保存する必要はない）
+4. `/mcp` で `n8n` が connected になっていれば完了
+
+### Claude が使うツール
+
+| 場面 | ツール | 権限 |
+| --- | --- | --- |
+| ノード選定・定義の取得 | `search_nodes`、`get_node_types`、`get_workflow_best_practices` | 確認なし（推奨。下の注を参照） |
+| ノード単位の検証 | `validate_node_config` | 確認なし（推奨） |
+| 実際の値の取得 | `explore_node_resources`、`list_credentials`（値は返らない） | 確認なし（推奨） |
+| ワークフロー・実行結果の参照 | `search_workflows`、`get_workflow_details`、`get_workflow_execution`、`search_workflow_executions` | 確認なし（推奨） |
+| テスト実行 | `execute_workflow`（`executionMode: "manual"`） | 毎回確認 |
+| n8n 上のワークフローの作成・変更・公開・アーカイブ | `create_workflow_from_code`、`update_workflow`、`publish_workflow` など | 毎回確認（基本は使わない） |
+
+> 「確認なし（推奨）」のツールは、権限の付与にあたるため Claude からは `.claude/settings.json` に追加していません。
+> 毎回の確認を省きたい場合は、各自で `permissions.allow` に `mcp__n8n__search_nodes` などを追加してください。
+> `npm run design:build -- <file> --auto` では、`scripts/design.js` の `AUTO_ALLOWED_TOOLS` でこれらと `execute_workflow` を許可しています。
+
+### ルール
+- ワークフローの正は `workflows/*.json`。n8n への反映は `npm run n8n:import` で行い、MCP で n8n 上のワークフローを直接変更しない
+  （例外: ノードの出力形式を確かめる一時的な検証用ワークフロー。確認後にアーカイブする）
+- CLI でインポートしたワークフローを MCP から見えるようにするため、JSON の `settings` に `"availableInMCP": true` を付ける（`validate:workflows` で必須）
+- MCP が使えない場合、Claude は MCP を使わない従来の手順で作業し、その旨を報告する
 
 ## フック（`.claude/settings.json` の `hooks.PostToolUse`）
 
@@ -55,7 +98,7 @@ contacts-intake の仕様書を作り直して
 | 種類 | 対象 |
 | --- | --- |
 | allow（確認なしで実行） | テスト、フォーマット、ワークフロー検証、同期、`describe`、`secrets:check`、`git status` / `git diff`、`docker compose ps` / `logs` / `config` |
-| ask（毎回確認） | n8n へのインポート・エクスポート・Credential 投入・テストデプロイ、`secrets:init`、`docker compose up` / `down` |
+| ask（毎回確認） | n8n へのインポート・エクスポート・Credential 投入・テストデプロイ、`secrets:init`、`docker compose up` / `down`、MCP の実行・ワークフロー変更系ツール |
 | deny（禁止） | `.env` と `.env.*` の読み取り、`secrets/` の読み書き、値を出力する `secrets.js credentials` の直接実行、`docker compose down -v`、`docker volume rm` |
 
 個人だけで使う設定は `.claude/settings.local.json`（Git の管理対象外）に書いてください。

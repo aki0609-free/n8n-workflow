@@ -1,7 +1,17 @@
 /**
  * ワークフローのテストケース（tests/workflows/<name>.cases.json）を実行・判定する。
  * fetch を注入できるようにして、単体テストでは HTTP を発生させない。
+ *
+ * ケースは 2 種類:
+ * - HTTP ケース: `request` を持つ。本番 Webhook URL に送信して、このスクリプトが判定する
+ * - MCP ケース : `request` を持たず `trigger`（トリガーノード名）を持つ。Form / Schedule / Manual など
+ *   Webhook 以外のトリガー用。Claude Code が n8n MCP の execute_workflow で実行して判定する
+ *   （OAuth の認証は Claude Code 側にあるため、このスクリプトからは実行しない）
  */
+
+function isMcpCase(testCase) {
+  return Boolean(testCase) && !testCase.request && typeof testCase.trigger === 'string';
+}
 
 /**
  * expected が actual の部分集合かを判定し、不一致のパスを返す。
@@ -87,4 +97,4 @@ async function runCase(testCase, { baseUrl, fetchFn = fetch, timeoutMs = 30000 }
   }
 }
 
-module.exports = { diffSubset, buildRequest, runCase };
+module.exports = { diffSubset, buildRequest, runCase, isMcpCase };

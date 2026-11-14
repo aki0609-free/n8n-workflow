@@ -52,7 +52,12 @@ docker-compose.yml で `./workflows` がコンテナの `/home/node/workflows` �
      - `Unrecognized node type` → n8n のバージョンが古い。`.env` の `N8N_VERSION` の更新をユーザーに提案。
      - Credential 未設定 → インポート自体は成功する。`secrets/secrets.env` への記入と手順 3 の実行を案内する。
 
-6. **報告**
+6. **MCP での確認**（n8n MCP が使える場合）
+   `mcp__n8n__get_workflow_details`（`workflowId` = JSON の `id`、`detailLevel: "execution"`）で、取り込んだワークフローが見えることと
+   トリガーの情報を確認する。見えない場合は JSON の `settings.availableInMCP` が `true` か確認する。
+   動作確認を頼まれた場合は `mcp__n8n__execute_workflow`（`executionMode: "manual"`）で実行できる（公開・API キーは不要）。
+
+7. **報告**
    インポートしたファイル、n8n 上のワークフロー名、エディタ URL（`http://localhost:5678/workflow/<id>`）、
    Webhook を含む場合はテスト URL（`http://localhost:5678/webhook-test/<path>`）を伝える。
    インポートしたワークフローは非アクティブ状態のため、本番 URL（`/webhook/<path>`）を使うには UI で有効化が必要な点も添える。

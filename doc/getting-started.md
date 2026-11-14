@@ -49,9 +49,12 @@ npm run secrets:check     # 入力状況を確認
 ## ローカル n8n の起動
 
 ```bash
-npm run n8n:up        # docker compose up -d
+npm run up            # n8n・PostgreSQL・Dashy を一括起動し、使えるようになるまで待って URL を表示
+npm run up -- --import  # 起動後に workflows/*.json もすべて取り込む（UI での未エクスポートの変更は上書きされる）
 npm run n8n:logs      # ログの確認（Ctrl+C で終了）
 ```
+
+`npm run n8n:up` は起動だけを行います（待ち合わせや URL の表示はしません）。
 
 ブラウザで http://localhost:5678 を開き、初回はオーナーアカウントを作成します。
 ワークフローの一覧（Dashy）は http://localhost:4000 で開けます（[dashboard.md](dashboard.md)）。
@@ -60,6 +63,7 @@ npm run n8n:logs      # ログの確認（Ctrl+C で終了）
 
 - **Settings > n8n API** で API キーを発行し、`secrets/secrets.env` の `N8N_API_KEY` に記入します（自動テストデプロイで使います）。
 - 認証情報を記入済みであれば、`npm run n8n:credentials` で n8n に登録します。
+- Claude Code を使う場合は、n8n MCP を接続します（**Settings → Instance-level MCP** を有効化し、Claude Code で `/mcp` → n8n → Authenticate）。詳しくは [claude-code.md](claude-code.md#n8n-mcp-サーバーmcpjson) を参照してください。
 
 ## サンプルワークフローを動かす
 
@@ -84,7 +88,7 @@ curl -X POST http://localhost:5678/webhook-test/contacts-intake \
 ## 停止
 
 ```bash
-npm run n8n:down      # コンテナ停止（データは Docker ボリュームに残る）
+npm run down          # コンテナ停止（データは Docker ボリュームに残る。npm run n8n:down と同じ）
 ```
 
 `docker compose down -v` はデータベースのボリュームまで削除します。ワークフローや Credential がすべて消えるため、意図した場合以外は実行しないでください。
