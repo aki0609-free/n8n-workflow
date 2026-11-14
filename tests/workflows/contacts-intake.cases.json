@@ -1,0 +1,35 @@
+{
+  "workflow": "workflows/contacts-intake.json",
+  "cases": [
+    {
+      "name": "正常: 重複と不正メールを含む連絡先を整形して返す",
+      "request": {
+        "method": "POST",
+        "path": "contacts-intake",
+        "body": {
+          "contacts": [
+            { "name": " Alice ", "email": "ALICE@example.com", "phone": "090-1111-2222" },
+            { "name": "Alice dup", "email": "alice@example.com" },
+            { "name": "Bob", "email": "bob@@example" }
+          ]
+        }
+      },
+      "expect": {
+        "status": 200,
+        "json": {
+          "contacts": [{ "name": "Alice", "email": "alice@example.com", "phone": "09011112222" }],
+          "summary": { "valid": 1, "invalid": 1 }
+        }
+      }
+    },
+    {
+      "name": "正常: 単一オブジェクトのボディ",
+      "request": {
+        "method": "POST",
+        "path": "contacts-intake",
+        "body": { "name": "Carol", "email": "carol@example.com" }
+      },
+      "expect": { "status": 200, "json": { "summary": { "valid": 1, "invalid": 0 } } }
+    }
+  ]
+}

@@ -5,10 +5,25 @@
  */
 const fs = require('node:fs');
 const path = require('node:path');
+const YAML = require('yaml');
 const { validateWorkflow } = require('./lib/workflow-validator');
 
 const ROOT = path.resolve(__dirname, '..');
 const WORKFLOW_DIR = path.join(ROOT, 'workflows');
+const CREDENTIALS_TEMPLATE = path.join(ROOT, 'config', 'credentials.template.json');
+const CATEGORIES = path.join(ROOT, 'config', 'categories.yml');
+
+const categoryCodes = fs.existsSync(CATEGORIES)
+  ? (YAML.parse(fs.readFileSync(CATEGORIES, 'utf8')).categories || []).map((c) => c.code)
+  : undefined;
+
+const knownCredentials = fs.existsSync(CREDENTIALS_TEMPLATE)
+  ? JSON.parse(fs.readFileSync(CREDENTIALS_TEMPLATE, 'utf8')).map(({ id, name, type }) => ({
+      id,
+      name,
+      type,
+    }))
+  : undefined;
 
 function listWorkflowFiles() {
   if (!fs.existsSync(WORKFLOW_DIR)) return [];
@@ -38,7 +53,7 @@ for (const file of files) {
     failed += 1;
     continue;
   }
-  const errors = validateWorkflow(workflow);
+  const errors = validateWorkflow(workflow, { knownCredentials, categoryCodes });
   if (errors.length > 0) {
     failed += 1;
     console.error(`✗ ${rel}`);

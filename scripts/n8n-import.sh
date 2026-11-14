@@ -47,4 +47,7 @@ for file in "$@"; do
   fi
 done
 
+# Dashy のカタログを更新（失敗してもインポート結果には影響させない）
+node scripts/dashy-sync.js || echo "warning: dashy:sync に失敗しました" >&2
+
 exit "$status"

@@ -14,6 +14,7 @@ n8n のワークフロー（JSON）と、コードベースのカスタムロジ
 npm install
 python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
 cp env.example .env   # N8N_ENCRYPTION_KEY などを設定（.env は Git 管理外・Claude は読まない）
+npm run secrets:init  # secrets/secrets.env を作成（API キーはユーザーが記入。Claude は読まない）
 npm run n8n:up        # http://localhost:5678
 ```
 
@@ -31,10 +32,21 @@ npm run n8n:up        # http://localhost:5678
 | n8n 起動 / 停止 / ログ | `npm run n8n:up` / `npm run n8n:down` / `npm run n8n:logs` |
 | n8n へインポート | `npm run n8n:import -- workflows/<file>.json`（引数省略で全件） |
 | n8n からエクスポート | `npm run n8n:export -- <workflowId>`（引数省略で全件） |
+| Dashy の conf.yml 生成 | `npm run dashy:sync`（n8n:up・n8n:import でも自動実行。Dashy は http://localhost:4000） |
+| 認証情報の入力状況 | `npm run secrets:check [-- KEY ...]`（値は表示されない） |
+| Credential を n8n へ投入 | `npm run n8n:credentials [-- "<name>" ...]` |
+| テストデプロイ | `npm run n8n:test -- workflows/<file>.json`（`tests/workflows/<file>.cases.json` を実行） |
+| 設計書から構築 | `npm run design:build -- designs/<id>.md [--auto]`（= `/build-from-design`）、一覧は `npm run design:list` |
 
 ## アーキテクチャ
 ```
+designs/                      ワークフロー設計書（入力）。_TEMPLATE.md の構成で書く
 workflows/                    n8n ワークフロー JSON（import/export 対象、コンテナにマウント）
+config/                       secrets.example.env（キー一覧）・credentials.template.json（Credential 定義）
+                              categories.yml（分類コード）・dashboard.yml（Dashy の固定部分）
+dashy/user-data/              Dashy の conf.yml（dashy:sync で生成・Git 管理外）
+secrets/                      実際の値（Git 管理外・Claude は読み書き禁止）
+tests/workflows/              テストデプロイ用ケース（<name>.cases.json）
 src/javascript/code-nodes/    Code ノードのロジック（run(items) を export する CommonJS）
 src/python/data_processing/   データ処理・スクレイピング（python -m data_processing で CLI 実行）
 tests/javascript/             Jest テスト
@@ -56,7 +68,9 @@ doc/specifications/           ワークフローごとの仕様書（n8n-spec-wr
 - サブエージェント:
   - `code-node-engineer` … Code ノード JS / Python の実装と単体テスト
   - `n8n-spec-writer` … ワークフロー・処理の変更を読み取り `doc/specifications/<name>.md` を作成・更新
-- スキル: `import-workflow` … ローカル n8n への CLI インポート
+- スキル:
+  - `build-from-design` … 設計書から構築・テストデプロイ・仕様書作成まで一括実行
+  - `import-workflow` … ローカル n8n への CLI インポート
 - フック:
   - `format-on-edit.js` … 編集後に JS/TS は Prettier、Python は Ruff で自動整形
   - `spec-reminder.js` … `workflows/`・`src/javascript/code-nodes/`・`src/python/` の編集時に仕様書の更新を通知
@@ -64,15 +78,18 @@ doc/specifications/           ワークフローごとの仕様書（n8n-spec-wr
 
 ## ドキュメントの更新ルール
 - ノード・接続・Code ノード・Python 処理を変更したら、作業の最後に `n8n-spec-writer` で仕様書を更新する
-- フォルダ構成・コマンド・CI を変更したら、`doc/` の該当ガイド（project-structure / development-workflow / ci-cd / claude-code）も更新する
+- フォルダ構成・コマンド・CI を変更したら、`doc/` の該当ガイド（project-structure / development-workflow / ci-cd / claude-code / secrets / design-driven-development / dashboard）も更新する
 
 ## コーディング規約
 - ワークフロー JSON
   - 固定の `id` を持たせる。`active: false`、`pinData: {}` でコミットする
-  - Credential の実値・API キーを JSON に含めない（n8n の Credential を参照する）
+  - `tags` に `config/categories.yml` の分類コードをちょうど 1 つ付ける（例: `[{ "name": "SLS" }]`）
+  - Credential の実値・API キーを JSON に含めない。認証は `config/credentials.template.json` の固定 ID で参照し、
+    設定値は `{{ $env.KEY }}` で参照する（詳細は `doc/secrets.md`）
   - `jsCode` を JSON 上で直接編集しない（ソースを編集して `npm run sync:code`）
   - `workflows/` は Prettier の対象外（n8n の出力形式を維持する）
 - JavaScript: CommonJS、Prettier（シングルクォート・100 桁）。Code ノードは n8n グローバルに依存しない純粋関数にする
 - Python: 3.11+、型ヒント必須、Ruff（line-length 100）。ネットワーク I/O とロジックを分離し、テストではネットワークに触れない
 - 変更を完了とする前に、`npm run validate:workflows`・`npm test`・`pytest` を実行してパスを確認する
-- `.env` は読まない・コミットしない。`docker compose down -v`（DB 消去）は実行しない
+- `.env` と `secrets/` は読まない・書かない・コミットしない。未入力のキーは `npm run secrets:check` で確認し、記入はユーザーに依頼する
+- `docker compose down -v`（DB 消去）は実行しない

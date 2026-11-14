@@ -9,6 +9,7 @@
 | 目的 | Webhook で受け取った連絡先データを正規化・検証・重複排除し、結果を呼び出し元に返す（サンプルワークフロー）。業務上の用途は **要確認** |
 | ワークフローファイル | `workflows/contacts-intake.json` |
 | ワークフロー ID | `ContactsIntake01` |
+| 分類 | `SMP` サンプル・検証 |
 | トリガー | Webhook（POST `/contacts-intake`、レスポンスは Respond to Webhook ノードで返す） |
 | 有効状態（リポジトリ上） | `false`（無効） |
 | 関連ソース | `src/javascript/code-nodes/format-contacts.js` |
@@ -117,7 +118,8 @@ Webhook が受け取ったリクエストボディを Format Contacts に渡し�
 | テストファイル | 確認している内容 |
 | --- | --- |
 | `tests/javascript/format-contacts.test.js` | 正規化関数（メール・名前・電話）、ボディ形式ごとのレコード取り出し、`run` の出力形式（正常・不正・重複・空入力） |
-| `tests/javascript/workflow-validator.test.js` | `workflows/contacts-intake.json` の構造の妥当性 |
+| `tests/javascript/workflow-validator.test.js` | `workflows/contacts-intake.json` の構造・Credential 参照・分類タグの妥当性 |
+| `tests/workflows/contacts-intake.cases.json` | テストデプロイ時の Webhook 呼び出し（正常系 2 件） |
 
 ## 9. 補足（手動記述）
 
@@ -128,3 +130,4 @@ Webhook が受け取ったリクエストボディを Format Contacts に渡し�
 | 日付 | 内容 |
 | --- | --- |
 | 2026-11-14 | 初版作成 |
+| 2026-11-14 | 分類コード `SMP` をタグとして追加 |

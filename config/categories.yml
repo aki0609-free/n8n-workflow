@@ -1,0 +1,30 @@
+# =============================================================================
+# 分類コードの一覧（アプリ = ワークフローの分類）
+#
+# - code: 英大文字で始まる 2〜5 文字（英大文字・数字）。ワークフローの n8n タグと、設計書の category に使う
+# - 1 つのワークフローには、ここにある分類コードのタグを「ちょうど 1 つ」付ける（npm run validate:workflows で検査）
+# - Dashy ではこの順番でセクションが並ぶ（ワークフローが 1 件も無い分類は表示しない）
+# - icon: Font Awesome（https://fontawesome.com/icons）などの Dashy が対応するアイコン
+# =============================================================================
+categories:
+  - code: SLS
+    name: 営業・販売
+    icon: fas fa-handshake
+  - code: MKT
+    name: マーケティング
+    icon: fas fa-bullhorn
+  - code: CS
+    name: カスタマーサポート
+    icon: fas fa-headset
+  - code: OPS
+    name: 社内業務・運用
+    icon: fas fa-cogs
+  - code: DATA
+    name: データ連携・集計
+    icon: fas fa-database
+  - code: AI
+    name: AI 活用
+    icon: fas fa-robot
+  - code: SMP
+    name: サンプル・検証
+    icon: fas fa-flask

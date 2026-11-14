@@ -21,6 +21,10 @@ services:
     restart: unless-stopped
     ports:
       - '${N8N_PORT:-5678}:5678'
+    # API キー・設定値（npm run secrets:init で作成）。ワークフローの式から {{ $env.KEY }} で参照できる
+    env_file:
+      - path: ./secrets/secrets.env
+        required: false
     environment:
       DB_TYPE: postgresdb
       DB_POSTGRESDB_HOST: postgres
@@ -39,6 +43,9 @@ services:
       N8N_RUNNERS_ENABLED: 'true'
       N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: 'true'
       N8N_DIAGNOSTICS_ENABLED: 'false'
+      # 式での $env 参照を許可（secrets/secrets.env の [env] 値を使うため）
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: 'false'
+      N8N_PUBLIC_API_DISABLED: 'false'
     volumes:
       - n8n_data:/home/node/.n8n
       # import / export 用にリポジトリの workflows/ をコンテナへマウント
@@ -51,6 +58,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
+
+  dashy:
+    image: lissy93/dashy:${DASHY_VERSION:-4.9.0}
+    restart: unless-stopped
+    ports:
+      - '${DASHY_PORT:-4000}:8080'
+    volumes:
+      # conf.yml は npm run dashy:sync で生成。ファイル単体ではなくディレクトリをマウントする
+      # （ファイル単体のマウントだと、書き換え後に反映されないことがある）
+      - ./dashy/user-data:/app/user-data
+    extra_hosts:
+      # ステータス確認でホスト上の Workflow Studio（:3100）に到達するため
+      - 'host.docker.internal:host-gateway'
+    depends_on:
+      - n8n
 
 volumes:
   postgres_data:

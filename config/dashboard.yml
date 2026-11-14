@@ -1,0 +1,62 @@
+# =============================================================================
+# Dashy ダッシュボードの固定部分
+#   npm run dashy:sync で、ここの内容 + 分類ごとのワークフロー一覧を
+#   dashy/user-data/conf.yml に生成する（conf.yml は自動生成。直接編集しない）
+#
+# 文字列中の {n8nBaseUrl} などは、下の links の値に置き換えられる
+# =============================================================================
+
+links:
+  # ブラウザから開く n8n の URL（.env の N8N_PORT を変えた場合はここも変える）
+  n8nBaseUrl: http://localhost:5678
+  # Workflow Studio（アプリ作成用 Web サイト。段階 2 で提供）
+  studioUrl: http://localhost:3100
+  # 仕様書・設計書へのリンク先（GitHub）
+  repoUrl: https://github.com/aki0609-free/n8n-workflow
+  repoBranch: main
+
+pageInfo:
+  title: n8n Workflow Portal
+  description: ワークフローのカタログと作成ツール
+  navLinks:
+    - title: n8n
+      path: '{n8nBaseUrl}'
+    - title: GitHub
+      path: '{repoUrl}'
+
+appConfig:
+  layout: auto
+  iconSize: medium
+  statusCheck: false
+  # conf.yml は自動生成のため、Dashy の画面からの保存は無効にする
+  preventWriteToDisk: true
+  disableUpdateChecks: true
+
+# 先頭に表示する固定セクション（アプリ作成メニューなど）
+toolsSection:
+  name: アプリ作成・ツール
+  icon: fas fa-toolbox
+  displayData:
+    cols: 2
+  items:
+    - title: アプリ作成
+      description: 設計書から作成 / 対話から作成（Workflow Studio）
+      url: '{studioUrl}'
+      icon: fas fa-magic
+      statusCheck: true
+      # 状態確認は Dashy コンテナから行うため、ホスト上の Studio は host.docker.internal で参照する
+      statusCheckUrl: http://host.docker.internal:3100
+    - title: n8n
+      description: ワークフローエディタ
+      url: '{n8nBaseUrl}'
+      icon: fas fa-project-diagram
+      statusCheck: true
+      statusCheckUrl: http://n8n:5678/healthz
+    - title: 設計書の書き方
+      description: designs/README.md
+      url: '{repoUrl}/blob/{repoBranch}/designs/README.md'
+      icon: fas fa-book
+    - title: GitHub
+      description: リポジトリ
+      url: '{repoUrl}'
+      icon: fab fa-github

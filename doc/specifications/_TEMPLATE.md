@@ -9,6 +9,7 @@
 | 目的 | <このワークフローで実現すること。不明なら **要確認**> |
 | ワークフローファイル | `workflows/<name>.json` |
 | ワークフロー ID | `<id>` |
+| 分類 | `<分類コード>` <分類名>（config/categories.yml） |
 | トリガー | <種類と条件（例: Webhook POST `/path`、Schedule 毎日 9:00）> |
 | 有効状態（リポジトリ上） | <active の値> |
 | 関連ソース | <Code ノードのソース、Python モジュール> |

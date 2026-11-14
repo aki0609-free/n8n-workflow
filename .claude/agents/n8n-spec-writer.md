@@ -30,6 +30,10 @@ node scripts/describe-workflow.js workflows/<name>.json          # ノード・�
 git diff HEAD -- workflows/<name>.json 2>/dev/null                # 前回からの差分（変更履歴用）
 ```
 
+- 設計書 `designs/<name>.md` があれば最初に読み、「目的」「非機能要件」「エラーハンドリング」の一次情報として使う
+  （設計書に書かれていることは「要確認」にしない。ただし実装と食い違う場合は、実装を正として書き、食い違いを報告する）。
+- テストケース `tests/workflows/<name>.cases.json` があれば「8. テスト」に含める。
+- Credential は `config/credentials.template.json` の `name` / `type` で、設定値は `$env` のキー名で書く。
 - `codeSources` に挙がったファイルと、それに対応するテスト（`tests/javascript/<x>.test.js`）を読み、
   入力形式・出力形式・バリデーション規則・エッジケースをテストケースから確認する。
 - Webhook の場合は `path`・`httpMethod`・`responseMode` から呼び出し方法を書く。

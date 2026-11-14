@@ -6,6 +6,13 @@ CLAUDE.local.md
 .env
 .env.*
 
+# 認証情報・API キー（ひな形は config/secrets.example.env）
+secrets/
+
+# Dashy（conf.yml は npm run dashy:sync で生成）
+dashy/user-data/*
+!dashy/user-data/.gitkeep
+
 # Node.js
 node_modules/
 coverage/

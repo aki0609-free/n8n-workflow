@@ -10,6 +10,7 @@ flowchart TD
   M -->|Code ノード・Python の実装とテスト| C[code-node-engineer]
   M -->|仕様書の作成・更新| S[n8n-spec-writer]
   M -->|ローカル n8n への反映| K[/import-workflow スキル/]
+  D["designs/*.md"] -->|/build-from-design| M
 ```
 
 | エージェント | 役割 | 主な対象 | 使えるツール |
@@ -37,7 +38,8 @@ contacts-intake の仕様書を作り直して
 
 | スキル | 呼び出し方 | 内容 |
 | --- | --- | --- |
-| `import-workflow` | `/import-workflow [workflows/xxx.json]`、または「n8n に反映して」 | コンテナの起動確認 → Code ノードの同期 → 検証 → `n8n import:workflow` → URL の案内 |
+| `build-from-design` | `/build-from-design designs/xxx.md`、または「この設計書から作って」 | 設計書の確認 → 認証情報の確認 → Code 実装とテスト → JSON 構築 → テストデプロイ → 仕様書作成（[design-driven-development.md](design-driven-development.md)） |
+| `import-workflow` | `/import-workflow [workflows/xxx.json]`、または「n8n に反映して」 | コンテナの起動確認 → Code ノードの同期 → Credential 投入 → 検証 → `n8n import:workflow` → URL の案内 |
 
 ## フック（`.claude/settings.json` の `hooks.PostToolUse`）
 
@@ -52,9 +54,9 @@ contacts-intake の仕様書を作り直して
 
 | 種類 | 対象 |
 | --- | --- |
-| allow（確認なしで実行） | テスト、フォーマット、ワークフロー検証、同期、`describe`、`git status` / `git diff`、`docker compose ps` / `logs` / `config` |
-| ask（毎回確認） | n8n へのインポート・エクスポート、`docker compose down` |
-| deny（禁止） | `.env` と `.env.*` の読み取り、`docker compose down -v`、`docker volume rm` |
+| allow（確認なしで実行） | テスト、フォーマット、ワークフロー検証、同期、`describe`、`secrets:check`、`git status` / `git diff`、`docker compose ps` / `logs` / `config` |
+| ask（毎回確認） | n8n へのインポート・エクスポート・Credential 投入・テストデプロイ、`secrets:init`、`docker compose up` / `down` |
+| deny（禁止） | `.env` と `.env.*` の読み取り、`secrets/` の読み書き、値を出力する `secrets.js credentials` の直接実行、`docker compose down -v`、`docker volume rm` |
 
 個人だけで使う設定は `.claude/settings.local.json`（Git の管理対象外）に書いてください。
 

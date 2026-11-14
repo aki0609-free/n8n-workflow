@@ -16,16 +16,24 @@
     "sync:code": "node scripts/sync-code-nodes.js",
     "sync:code:check": "node scripts/sync-code-nodes.js --check",
     "describe": "node scripts/describe-workflow.js",
-    "n8n:up": "docker compose up -d",
+    "n8n:up": "node scripts/dashy-sync.js && docker compose up -d",
+    "dashy:sync": "node scripts/dashy-sync.js",
     "n8n:down": "docker compose down",
     "n8n:logs": "docker compose logs -f n8n",
     "n8n:import": "bash scripts/n8n-import.sh",
     "n8n:export": "bash scripts/n8n-export.sh",
+    "n8n:credentials": "bash scripts/n8n-credentials.sh",
+    "n8n:test": "node scripts/n8n-test-run.js",
+    "design:list": "node scripts/design.js list",
+    "design:build": "node scripts/design.js build",
+    "secrets:init": "node scripts/secrets.js init",
+    "secrets:check": "node scripts/secrets.js check",
     "ci": "npm run format:check && npm run validate:workflows && npm run sync:code:check && npm test"
   },
   "devDependencies": {
     "jest": "^29.7.0",
-    "prettier": "^3.3.3"
+    "prettier": "^3.3.3",
+    "yaml": "^2.9.1"
   },
   "jest": {
     "testEnvironment": "node",

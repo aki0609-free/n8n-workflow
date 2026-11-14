@@ -27,12 +27,21 @@ cp env.example .env
 
 > `env.example` はドット無しのファイル名です。Claude Code の設定で `.env.*` の読み取りを禁止しているため、この名前にしています。
 
+```bash
+# 4. API キー・認証情報（使うサービスの分だけ記入すればよい）
+npm run secrets:init      # secrets/secrets.env を作成（Git 管理外）
+npm run secrets:check     # 入力状況を確認
+```
+
+`.env` は n8n と DB を動かすための設定、`secrets/secrets.env` はワークフローが使う外部サービスの API キーです。詳しくは [secrets.md](secrets.md) を参照してください。
+
 ### 環境変数
 
 | 変数 | 既定値 | 説明 |
 | --- | --- | --- |
 | `N8N_VERSION` | `latest` | n8n イメージのタグ。チームで揃えるため具体的なバージョンへの固定を推奨 |
 | `N8N_PORT` | `5678` | ホスト側のポート |
+| `DASHY_VERSION` / `DASHY_PORT` | `4.9.0` / `4000` | Dashy のイメージタグとポート |
 | `GENERIC_TIMEZONE` | `Asia/Tokyo` | n8n のタイムゾーン（Schedule Trigger などに影響） |
 | `N8N_ENCRYPTION_KEY` | （要変更） | Credential の暗号化キー。**一度決めたら変更しない**（変更すると保存済み Credential を復号できなくなる） |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `n8n` / … / `n8n` | PostgreSQL の接続情報 |
@@ -45,6 +54,12 @@ npm run n8n:logs      # ログの確認（Ctrl+C で終了）
 ```
 
 ブラウザで http://localhost:5678 を開き、初回はオーナーアカウントを作成します。
+ワークフローの一覧（Dashy）は http://localhost:4000 で開けます（[dashboard.md](dashboard.md)）。
+
+続けて、次の 2 つを行います。
+
+- **Settings > n8n API** で API キーを発行し、`secrets/secrets.env` の `N8N_API_KEY` に記入します（自動テストデプロイで使います）。
+- 認証情報を記入済みであれば、`npm run n8n:credentials` で n8n に登録します。
 
 ## サンプルワークフローを動かす
 
@@ -62,7 +77,9 @@ curl -X POST http://localhost:5678/webhook-test/contacts-intake \
   -d '{"contacts":[{"name":" Alice ","email":"ALICE@example.com"},{"name":"Bob","email":"bad"}]}'
 ```
 
-正規化済みの連絡先・不正なデータ・件数のサマリーが JSON で返れば成功です。詳しくは [specifications/contacts-intake.md](specifications/contacts-intake.md) を参照してください。
+正規化済みの連絡先・不正なデータ・件数のサマリーが JSON で返れば成功です。
+
+`N8N_API_KEY` を設定済みであれば、`npm run n8n:test -- workflows/contacts-intake.json` で、有効化から `tests/workflows/contacts-intake.cases.json` の実行、無効化までを自動で行えます。詳しくは [specifications/contacts-intake.md](specifications/contacts-intake.md) を参照してください。
 
 ## 停止
 
