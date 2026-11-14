@@ -1,0 +1,9 @@
+node_modules/
+coverage/
+.venv/
+package-lock.json
+# n8n が出力する JSON はそのままの形で保持する（UI 編集→export 時の差分ノイズ防止）
+workflows/
+# Claude Code の個人設定・Markdown はフォーマット対象外
+.claude/
+*.md

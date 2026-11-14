@@ -1,0 +1,40 @@
+{
+  "name": "n8n-workflows",
+  "version": "0.1.0",
+  "private": true,
+  "description": "n8n workflows (JSON) + custom JavaScript/Python logic managed with Git and CI/CD",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "validate:workflows": "node scripts/validate-workflows.js",
+    "sync:code": "node scripts/sync-code-nodes.js",
+    "sync:code:check": "node scripts/sync-code-nodes.js --check",
+    "describe": "node scripts/describe-workflow.js",
+    "n8n:up": "docker compose up -d",
+    "n8n:down": "docker compose down",
+    "n8n:logs": "docker compose logs -f n8n",
+    "n8n:import": "bash scripts/n8n-import.sh",
+    "n8n:export": "bash scripts/n8n-export.sh",
+    "ci": "npm run format:check && npm run validate:workflows && npm run sync:code:check && npm test"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "prettier": "^3.3.3"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/tests/javascript"
+    ],
+    "collectCoverageFrom": [
+      "src/javascript/**/*.js",
+      "scripts/lib/**/*.js"
+    ]
+  }
+}

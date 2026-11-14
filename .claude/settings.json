@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "agent": "n8n-workflow-expert",
+  "permissions": {
+    "allow": [
+      "Bash(npm test)",
+      "Bash(npm test:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run format:*)",
+      "Bash(npm run validate:workflows:*)",
+      "Bash(npm run sync:code:*)",
+      "Bash(npm run ci)",
+      "Bash(npx jest:*)",
+      "Bash(npx prettier:*)",
+      "Bash(node scripts/validate-workflows.js:*)",
+      "Bash(node scripts/sync-code-nodes.js:*)",
+      "Bash(node scripts/describe-workflow.js:*)",
+      "Bash(npm run describe:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(ruff check:*)",
+      "Bash(ruff format:*)",
+      "Bash(.venv/bin/ruff:*)",
+      "Bash(.venv/bin/pytest:*)",
+      "Bash(pytest:*)",
+      "Bash(jq:*)",
+      "Bash(docker compose ps:*)",
+      "Bash(docker compose logs:*)",
+      "Bash(docker compose config:*)"
+    ],
+    "ask": [
+      "Bash(npm run n8n:import:*)",
+      "Bash(npm run n8n:export:*)",
+      "Bash(bash scripts/n8n-import.sh:*)",
+      "Bash(bash scripts/n8n-export.sh:*)",
+      "Bash(docker compose down:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Bash(docker compose down -v:*)",
+      "Bash(docker volume rm:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/format-on-edit.js\"",
+            "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/spec-reminder.js\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

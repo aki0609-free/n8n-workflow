@@ -1,0 +1,23 @@
+# Claude Code 個人設定
+.claude/settings.local.json
+CLAUDE.local.md
+
+# 環境変数
+.env
+.env.*
+
+# Node.js
+node_modules/
+coverage/
+npm-debug.log*
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# OS / Editor
+.DS_Store
+.idea/
