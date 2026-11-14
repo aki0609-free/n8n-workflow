@@ -70,15 +70,14 @@ Claude は推測でノードのパラメータを書かずに、n8n から正し
 
 | 場面 | ツール | 権限 |
 | --- | --- | --- |
-| ノード選定・定義の取得 | `search_nodes`、`get_node_types`、`get_workflow_best_practices` | 確認なし（推奨。下の注を参照） |
-| ノード単位の検証 | `validate_node_config` | 確認なし（推奨） |
-| 実際の値の取得 | `explore_node_resources`、`list_credentials`（値は返らない） | 確認なし（推奨） |
-| ワークフロー・実行結果の参照 | `search_workflows`、`get_workflow_details`、`get_workflow_execution`、`search_workflow_executions` | 確認なし（推奨） |
+| ノード選定・定義の取得 | `search_nodes`、`get_node_types`、`get_workflow_best_practices` | 確認なし |
+| ノード単位の検証 | `validate_node_config` | 確認なし |
+| 実際の値の取得 | `explore_node_resources`、`list_credentials`（値は返らない） | 確認なし |
+| ワークフロー・実行結果の参照 | `search_workflows`、`get_workflow_details`、`get_workflow_execution`、`search_workflow_executions` | 確認なし |
 | テスト実行 | `execute_workflow`（`executionMode: "manual"`） | 毎回確認 |
 | n8n 上のワークフローの作成・変更・公開・アーカイブ | `create_workflow_from_code`、`update_workflow`、`publish_workflow` など | 毎回確認（基本は使わない） |
 
-> 「確認なし（推奨）」のツールは、権限の付与にあたるため Claude からは `.claude/settings.json` に追加していません。
-> 毎回の確認を省きたい場合は、各自で `permissions.allow` に `mcp__n8n__search_nodes` などを追加してください。
+> 「確認なし」のツールは、どれも読み取りか検証だけで n8n 側を変更しないため、`.claude/settings.json` の `permissions.allow` に登録しています。
 > `npm run design:build -- <file> --auto` では、`scripts/lib/claude-cli.js` の `AUTO_ALLOWED_TOOLS` でこれらと `execute_workflow` を許可しています。
 
 ### ルール
