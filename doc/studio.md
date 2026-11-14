@@ -95,6 +95,7 @@ Studio は Claude にリポジトリを書き換えさせるため、このマ�
 | 「他の処理が実行中です」 | 実行中の構築や対話が終わるのを待つか、「中止」を押す |
 | 起動しない | `.studio/studio.log` を確認する。ポートが使用中なら `STUDIO_PORT` を変える |
 | フォームを開くと「Problem loading form」 | ワークフローが n8n に取り込まれていないか、公開されていない。`npm run n8n:import -- workflows/<id>.json` のあと、n8n の画面で Publish する（`npm run n8n:test -- workflows/<id>.json --keep-active` でも公開される） |
+| `$env` の値が空・古い（例: メール送信で `No recipients defined`） | `secrets/secrets.env` の変更は n8n コンテナを作り直すまで反映されない。`docker compose up -d --force-recreate n8n` を実行する（Credential 側の値は `npm run n8n:credentials` で反映） |
 | 構築が途中で止まった | 実行ログの最後と、設計書の「11. 未決事項」を確認する。Credential の未入力なら `npm run secrets:check` |
 
 ## ファイル
