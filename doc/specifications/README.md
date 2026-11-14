@@ -12,3 +12,4 @@
 | 仕様書 | ワークフロー | トリガー | 概要 |
 | --- | --- | --- | --- |
 | [contacts-intake.md](contacts-intake.md) | `workflows/contacts-intake.json` | Webhook（POST `/contacts-intake`） | 連絡先データを受け取り、正規化・検証・重複排除して JSON で返す |
+| [memo-to-gmail.md](memo-to-gmail.md) | `workflows/memo-to-gmail.json` | Form Trigger（`/form/memo-to-gmail`） | フォームで入力したメモを、件名に「[メモ]」と日時を付けて SMTP で自分の Gmail に送る |

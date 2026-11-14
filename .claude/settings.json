@@ -41,21 +41,22 @@
       "mcp__n8n__search_workflows",
       "mcp__n8n__get_workflow_details",
       "mcp__n8n__get_workflow_execution",
-      "mcp__n8n__search_workflow_executions"
-    ],
-    "ask": [
+      "mcp__n8n__search_workflow_executions",
       "Bash(npm run n8n:import:*)",
-      "Bash(npm run n8n:export:*)",
       "Bash(npm run n8n:credentials:*)",
       "Bash(npm run n8n:test:*)",
-      "Bash(npm run secrets:init)",
       "Bash(bash scripts/n8n-import.sh:*)",
-      "Bash(bash scripts/n8n-export.sh:*)",
       "Bash(bash scripts/n8n-credentials.sh:*)",
       "Bash(node scripts/n8n-test-run.js:*)",
+      "mcp__n8n__execute_workflow"
+
+    ],
+    "ask": [
+      "Bash(npm run n8n:export:*)",
+      "Bash(npm run secrets:init)",
+      "Bash(bash scripts/n8n-export.sh:*)",
       "Bash(docker compose up:*)",
       "Bash(docker compose down:*)",
-      "mcp__n8n__execute_workflow",
       "mcp__n8n__create_workflow_from_code",
       "mcp__n8n__update_workflow",
       "mcp__n8n__publish_workflow",

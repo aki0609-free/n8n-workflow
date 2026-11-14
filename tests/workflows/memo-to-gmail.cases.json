@@ -1,0 +1,37 @@
+{
+  "workflow": "workflows/memo-to-gmail.json",
+  "cases": [
+    {
+      "name": "件名ありのメモが送信される",
+      "trigger": "Form Trigger",
+      "inputs": { "formData": { "title": "テスト件名", "memo": "テストのメモです\n2 行目" } },
+      "expect": {
+        "status": "success",
+        "node": "Build Memo Mail",
+        "json": { "valid": true, "subjectTitle": "テスト件名" }
+      }
+    },
+    {
+      "name": "件名が空なら本文の最初の 20 文字が件名になる",
+      "trigger": "Form Trigger",
+      "inputs": {
+        "formData": { "title": "", "memo": "テスト本文の先頭二十文字を件名に使うことを確かめる" }
+      },
+      "expect": {
+        "status": "success",
+        "node": "Build Memo Mail",
+        "json": { "valid": true, "subjectTitle": "テスト本文の先頭二十文字を件名に使うこ…" }
+      }
+    },
+    {
+      "name": "メモが空白だけならメールを送らない",
+      "trigger": "Form Trigger",
+      "inputs": { "formData": { "title": "空メモ", "memo": "   \n  " } },
+      "expect": {
+        "status": "success",
+        "node": "Build Memo Mail",
+        "json": { "valid": false, "errors": ["memo_required"] }
+      }
+    }
+  ]
+}
